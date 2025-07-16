@@ -173,7 +173,7 @@ app.post('/slack/commands', async (req, res) => {
       });
     }
     
-    if (command !== '/poker') {
+    if (command !== '/poker' && command !== '/poker-reveal') {
       console.log(`Unexpected command: ${command}`);
       return res.status(200).json({ 
         text: "This endpoint only handles the /poker and /poker-reveal commands." 
@@ -217,10 +217,16 @@ app.post('/slack/commands', async (req, res) => {
 
     console.log('Successfully saved session, sending response to Slack');
     
-    // Response with multiple voting options
+    // Format the issue text - handle URLs specially
+    let formattedIssue = text;
+    if (text.startsWith('http')) {
+      formattedIssue = `<${text}>`;
+    }
+    
+    // Respond with voting buttons using message attachments format
     return res.status(200).json({
       response_type: "in_channel",
-      text: `Planning Poker started by <@${user_id}> for: *${text}*\nSession ID: ${sessionId}`,
+      text: `Planning Poker started by <@${user_id}> for: *${formattedIssue}*\nSession ID: ${sessionId}\n\nOnce everyone has voted, type \`/poker-reveal\` to reveal the results.`,
       attachments: [
         {
           text: "Choose your estimate:",

@@ -3,9 +3,17 @@
 This is a simple Planning Poker tool integrated with Slack and Supabase.
 
 ## Features
-- Slack slash command `/poker`
+
+### Slack Commands
+
+- `/poker [issue]` - Start a new planning poker session with the specified issue
+- `/poker-reveal` - Reveal the results of the latest session in the current channel
+
+### Interactive Voting Buttons
+
 - Interactive voting buttons
 - Votes stored in Supabase
+- Results displayed in the channel anonymously
 
 ## Setup
 
