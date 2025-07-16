@@ -165,6 +165,14 @@ app.post('/slack/commands', async (req, res) => {
         });
       }
       
+      // Check if there are any votes before showing results
+      if (!votes || votes.length === 0) {
+        return res.status(200).json({
+          response_type: "ephemeral",
+          text: `No votes have been cast yet for issue: *${session.issue}*\nWait for team members to vote before revealing results.`
+        });
+      }
+      
       const resultsText = formatVotesForDisplay(session, votes);
       
       return res.status(200).json({
