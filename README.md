@@ -17,6 +17,10 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
 - **Data Storage**:
   - All votes and sessions stored in Supabase
   - Session history maintained per channel
+- **Cold Start**:
+  - The bot might take a few seconds to start up on the first request. 
+  - A visual "Processing..." message will be shown during start up.
+  - Subsequent requests will be much faster
 
 ## Setup
 
