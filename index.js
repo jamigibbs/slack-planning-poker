@@ -32,7 +32,7 @@ app.post('/slack/verify', (req, res) => {
 });
 
 // Utility to save a vote
-async function saveVote(sessionId, userId, vote) {
+async function saveVote(sessionId, userId, vote, username) {
   try {
     // Use upsert operation with on_conflict to update existing votes
     const { error } = await supabase
@@ -40,7 +40,8 @@ async function saveVote(sessionId, userId, vote) {
       .upsert({ 
         session_id: sessionId, 
         user_id: userId, 
-        vote: vote 
+        vote: vote,
+        username: username
       }, {
         onConflict: 'session_id,user_id',
         returning: 'minimal'
@@ -50,7 +51,6 @@ async function saveVote(sessionId, userId, vote) {
       console.error('Error saving vote:', error);
       return { success: false, error };
     }
-    
     return { success: true };
   } catch (err) {
     console.error('Exception saving vote:', err);
@@ -404,7 +404,7 @@ app.post('/slack/actions', async (req, res) => {
         });
       }
       
-      const saveResult = await saveVote(sessionId, user.id, parseInt(vote));
+      const saveResult = await saveVote(sessionId, user.id, parseInt(vote), user.name);
       if (!saveResult.success) {
         console.log('Failed to save vote:', saveResult.error);
         return res.status(200).json({
@@ -449,21 +449,32 @@ function formatVotesForDisplay(session, votes) {
     return `No votes yet for issue: *${session.issue}*`;
   }
   
-  // Count votes by value
+  // Count votes by value and collect usernames for each vote value
   const voteCounts = {};
+  const voteUsers = {};
+  
   votes.forEach(vote => {
     const voteValue = vote.vote.toString();
+    // Count votes
     voteCounts[voteValue] = (voteCounts[voteValue] || 0) + 1;
+    
+    // Collect usernames
+    if (!voteUsers[voteValue]) {
+      voteUsers[voteValue] = [];
+    }
+    const username = vote.username || `<@${vote.user_id}>`;
+    voteUsers[voteValue].push(username);
   });
   
   // Format results
   let result = `*Results for "${session.issue}"*\n`;
   result += `Total votes: ${votes.length}\n\n`;
   
-  // Add vote distribution
+  // Add vote distribution with usernames
   result += "*Vote distribution:*\n";
   Object.keys(voteCounts).sort((a, b) => parseInt(a) - parseInt(b)).forEach(value => {
-    result += `• ${value}: ${voteCounts[value]} vote${voteCounts[value] > 1 ? 's' : ''}\n`;
+    const userList = voteUsers[value].join(', ');
+    result += `• ${value}: ${voteCounts[value]} vote${voteCounts[value] > 1 ? 's' : ''} (${userList})\n`;
   });
   
   return result;
