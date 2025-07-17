@@ -34,9 +34,17 @@ app.post('/slack/verify', (req, res) => {
 // Utility to save a vote
 async function saveVote(sessionId, userId, vote) {
   try {
+    // Use upsert operation with on_conflict to update existing votes
     const { error } = await supabase
       .from('votes')
-      .insert({ session_id: sessionId, user_id: userId, vote: vote });
+      .upsert({ 
+        session_id: sessionId, 
+        user_id: userId, 
+        vote: vote 
+      }, {
+        onConflict: 'session_id,user_id',
+        returning: 'minimal'
+      });
     
     if (error) {
       console.error('Error saving vote:', error);
@@ -88,7 +96,7 @@ async function getSessionVotes(sessionId) {
       console.error('Error fetching votes:', error);
       return { success: false, error, votes: null };
     }
-    
+
     const { data: sessionData, error: sessionError } = await supabase
       .from('sessions')
       .select('*')
@@ -154,7 +162,7 @@ app.post('/slack/commands', async (req, res) => {
         // Update the in-memory cache
         latestSessionPerChannel[channel_id] = sessionId;
       }
-      
+
       const { success, error, session, votes } = await getSessionVotes(sessionId);
       
       if (!success || !session) {
@@ -337,8 +345,10 @@ app.post('/slack/actions', async (req, res) => {
         });
       }
       
+      // Keep the original message with voting buttons intact for everyone
       return res.status(200).json({
         response_type: 'ephemeral',
+        replace_original: false,
         text: `Your vote of *${vote}* has been recorded for session ${sessionId}.`
       });
     }

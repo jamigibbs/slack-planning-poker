@@ -54,6 +54,7 @@ create table votes (
   id uuid default uuid_generate_v4() primary key,
   session_id text references sessions(id),
   user_id text,
-  vote integer
+  vote integer,
+  UNIQUE (session_id, user_id)
 );
 ```
