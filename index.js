@@ -119,6 +119,74 @@ async function getSessionVotes(sessionId) {
   }
 }
 
+// Array of suitable emoji reactions for voting
+const voteEmojis = [
+  'white_check_mark', 'eyes', 'thinking_face', 'raised_hand', 
+  'bulb', 'rocket', 'star', 'tada', 'ballot_box_with_check',
+  'ok_hand', 'thumbsup', 'raised_hands', 'clap', 'muscle',
+  'sunglasses', 'nerd_face', 'robot_face', 'zap', 'fire'
+];
+
+// Get a random emoji from the array
+function getRandomEmoji() {
+  const randomIndex = Math.floor(Math.random() * voteEmojis.length);
+  return voteEmojis[randomIndex];
+}
+
+// Utility to add a reaction to a message
+async function addReaction(channel, timestamp, user, reaction = null) {
+  try {
+    // If no specific reaction is provided, get a random one
+    if (!reaction) {
+      reaction = getRandomEmoji();
+    }
+    
+    console.log(`Adding ${reaction} reaction to message in channel ${channel} at timestamp ${timestamp}`);
+    
+    // Important: We need to use the bot token to add reactions, not as the user
+    // The user parameter is not used in the API call as the bot adds the reaction
+    const response = await axios.post('https://slack.com/api/reactions.add', {
+      channel: channel,
+      timestamp: timestamp,
+      name: reaction
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.data.ok) {
+      console.error('Error adding reaction:', response.data.error);
+      
+      // Handle specific error cases
+      if (response.data.error === 'not_in_channel') {
+        console.log(`Bot needs to be invited to channel ${channel}. Use /invite @YourBotName in the channel.`);
+      } else if (response.data.error === 'missing_scope') {
+        console.log('Bot token is missing reactions:write scope. Update app permissions in Slack API dashboard.');
+      } else if (response.data.error === 'already_reacted') {
+        // If this emoji is already used, try another random one
+        console.log('Already used this emoji, trying another one');
+        // Try again with a different emoji
+        const newEmoji = getRandomEmoji();
+        if (newEmoji !== reaction) {
+          return addReaction(channel, timestamp, user, newEmoji);
+        } else {
+          console.log('Already reacted with all available emojis');
+          return { success: true, alreadyReacted: true };
+        }
+      }
+      
+      return { success: false, error: response.data.error };
+    }
+    
+    return { success: true, emoji: reaction };
+  } catch (err) {
+    console.error('Exception adding reaction:', err);
+    return { success: false, error: err };
+  }
+}
+
 // Slack slash command handler
 app.post('/slack/commands', async (req, res) => {
   try {
@@ -343,6 +411,15 @@ app.post('/slack/actions', async (req, res) => {
           response_type: 'ephemeral',
           text: `There was an error recording your vote. Please try again.`
         });
+      }
+      
+      // Try to add a reaction to the original message
+      if (payload.channel && payload.message_ts) {
+        // For interactive messages, we can get the original message timestamp
+        await addReaction(payload.channel.id, payload.message_ts, user.id);
+      } else if (payload.channel && payload.original_message && payload.original_message.ts) {
+        // For message attachments, we need to use the original_message.ts
+        await addReaction(payload.channel.id, payload.original_message.ts, user.id);
       }
       
       // Keep the original message with voting buttons intact for everyone
