@@ -14,6 +14,16 @@ const port = process.env.PORT || 3000;
 // Track the latest session ID per channel
 const latestSessionPerChannel = {};
 
+// Array of suitable emoji reactions for voting
+const voteEmojis = [
+  'white_check_mark', 'eyes', 'thinking_face', 'raised_hand', 
+  'bulb', 'rocket', 'star', 'tada', 'ballot_box_with_check',
+  'heavy_check_mark', 'thumbsup', 'raised_hands', 'clap', 'muscle',
+  'sunglasses', 'nerd_face', 'robot_face', 'zap', 'fire', 
+  'bug', 'the_horns', 'brain', 'cat', 'robot_face'
+];
+
+// Express middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -31,7 +41,11 @@ app.post('/slack/verify', (req, res) => {
   res.status(200).json({ text: "Verification successful!" });
 });
 
-// Utility to save a vote
+/**
+ * UTILITY FUNCTIONS
+ */
+
+// Save a vote to the database
 async function saveVote(sessionId, userId, vote, username) {
   try {
     // Use upsert operation with on_conflict to update existing votes
@@ -46,7 +60,6 @@ async function saveVote(sessionId, userId, vote, username) {
         onConflict: 'session_id,user_id',
         returning: 'minimal'
       });
-    
     if (error) {
       console.error('Error saving vote:', error);
       return { success: false, error };
@@ -58,7 +71,7 @@ async function saveVote(sessionId, userId, vote, username) {
   }
 }
 
-// Utility to get the latest session for a channel
+// Get the latest session for a channel
 async function getLatestSessionForChannel(channelId) {
   try {
     const { data, error } = await supabase
@@ -84,14 +97,14 @@ async function getLatestSessionForChannel(channelId) {
   }
 }
 
-// Utility to get all votes for a session
+// Get all votes for a session
 async function getSessionVotes(sessionId) {
   try {
     const { data, error } = await supabase
       .from('votes')
       .select('*')
       .eq('session_id', sessionId);
-    
+
     if (error) {
       console.error('Error fetching votes:', error);
       return { success: false, error, votes: null };
@@ -119,21 +132,13 @@ async function getSessionVotes(sessionId) {
   }
 }
 
-// Array of suitable emoji reactions for voting
-const voteEmojis = [
-  'white_check_mark', 'eyes', 'thinking_face', 'raised_hand', 
-  'bulb', 'rocket', 'star', 'tada', 'ballot_box_with_check',
-  'ok_hand', 'thumbsup', 'raised_hands', 'clap', 'muscle',
-  'sunglasses', 'nerd_face', 'robot_face', 'zap', 'fire'
-];
-
 // Get a random emoji from the array
 function getRandomEmoji() {
   const randomIndex = Math.floor(Math.random() * voteEmojis.length);
   return voteEmojis[randomIndex];
 }
 
-// Utility to add a reaction to a message
+// Add a reaction to a message
 async function addReaction(channel, timestamp, user, reaction = null) {
   try {
     // If no specific reaction is provided, get a random one
@@ -187,18 +192,50 @@ async function addReaction(channel, timestamp, user, reaction = null) {
   }
 }
 
+// Format votes for display
+function formatVotesForDisplay(session, votes) {
+  if (!votes || votes.length === 0) {
+    return `No votes yet for issue: *${session.issue}*`;
+  }
+  
+  // Count votes by value and collect usernames for each vote value
+  const voteCounts = {};
+  const voteUsers = {};
+  
+  votes.forEach(vote => {
+    const voteValue = vote.vote.toString();
+    // Count votes
+    voteCounts[voteValue] = (voteCounts[voteValue] || 0) + 1;
+    
+    // Collect usernames
+    if (!voteUsers[voteValue]) {
+      voteUsers[voteValue] = [];
+    }
+    const username = vote.username || `<@${vote.user_id}>`;
+    voteUsers[voteValue].push(username);
+  });
+  
+  // Format results
+  let result = `*Results for "${session.issue}"*\n`;
+  result += `Total votes: ${votes.length}\n\n`;
+  
+  // Add vote distribution with usernames
+  result += "*Vote distribution:*\n";
+  Object.keys(voteCounts).sort((a, b) => parseInt(a) - parseInt(b)).forEach(value => {
+    const userList = voteUsers[value].join(', ');
+    result += `• ${value}: ${voteCounts[value]} vote${voteCounts[value] > 1 ? 's' : ''} (${userList})\n`;
+  });
+  
+  return result;
+}
+
+/**
+ * SLACK COMMAND HANDLERS
+ */
+
 // Slack slash command handler
 app.post('/slack/commands', async (req, res) => {
   try {
-    console.log('Received slash command with body:', JSON.stringify(req.body));
-    
-    // More detailed logging of request fields
-    console.log('Request fields:');
-    console.log('- text:', req.body.text);
-    console.log('- user_id:', req.body.user_id);
-    console.log('- channel_id:', req.body.channel_id);
-    console.log('- command:', req.body.command);
-    
     // Check if we have the required fields
     const { text, user_id, channel_id, command } = req.body;
     
@@ -268,40 +305,36 @@ app.post('/slack/commands', async (req, res) => {
     if (!text) {
       console.log('Missing text field for /poker command');
       return res.status(200).json({ 
-        text: "Error: Please provide an issue description. Usage: /poker [issue]" 
+        response_type: "ephemeral",
+        text: "Please provide an issue description or link. Usage: `/poker [issue]`" 
       });
     }
-
-    const sessionId = `sess-${Date.now()}`;
-    console.log(`Creating session ${sessionId} for channel ${channel_id} with issue: ${text}`);
-
-    try {
-      // Save session info to Supabase with created_at timestamp
-      const { error } = await supabase
-        .from('sessions')
-        .insert({ 
-          id: sessionId, 
-          channel: channel_id, 
-          issue: text,
-          created_at: new Date().toISOString()
-        });
-      
-      if (error) {
-        console.error('Supabase error saving session:', error);
-        return res.status(200).json({ 
-          text: "Sorry, there was an error saving your session. Please try again." 
-        });
-      }
-    } catch (dbError) {
-      console.error('Exception saving session to Supabase:', dbError);
-      return res.status(200).json({ 
-        text: "Sorry, there was a database error. Please try again." 
-      });
-    }
-
-    console.log('Successfully saved session, sending response to Slack');
     
-    // Format the issue text - handle URLs specially
+    // Generate a unique session ID
+    const sessionId = `sess-${Date.now()}`;
+    
+    // Save the session to Supabase
+    const { error } = await supabase
+      .from('sessions')
+      .insert({ 
+        id: sessionId, 
+        channel: channel_id, 
+        issue: text,
+        created_at: new Date().toISOString()
+      });
+    
+    if (error) {
+      console.error('Error creating session:', error);
+      return res.status(200).json({ 
+        response_type: "ephemeral",
+        text: "Error: Could not create a new planning poker session." 
+      });
+    }
+    
+    // Update the in-memory cache
+    latestSessionPerChannel[channel_id] = sessionId;
+    
+    // Format the issue text for display
     let formattedIssue = text;
     if (text.startsWith('http')) {
       formattedIssue = `<${text}>`;
@@ -319,42 +352,18 @@ app.post('/slack/commands', async (req, res) => {
           color: "#3AA3E3",
           attachment_type: "default",
           actions: [
-            {
-              name: "vote",
-              text: "1",
-              type: "button",
-              value: "1"
-            },
-            {
-              name: "vote",
-              text: "2",
-              type: "button",
-              value: "2"
-            },
-            {
-              name: "vote",
-              text: "3",
-              type: "button",
-              value: "3"
-            },
-            {
-              name: "vote",
-              text: "5",
-              type: "button",
-              value: "5"
-            },
-            {
-              name: "vote",
-              text: "8",
-              type: "button",
-              value: "8"
-            }
+            { name: "vote", text: "1", type: "button", value: "1" },
+            { name: "vote", text: "2", type: "button", value: "2" },
+            { name: "vote", text: "3", type: "button", value: "3" },
+            { name: "vote", text: "5", type: "button", value: "5" },
+            { name: "vote", text: "8", type: "button", value: "8" }
           ]
         }
       ]
     });
-  } catch (error) {
-    console.error('Error handling slash command:', error);
+  } catch (err) {
+    console.error('Exception handling slash command:', err);
+    
     // Always return a 200 status to Slack, even for errors
     return res.status(200).json({ 
       text: "Sorry, there was an error processing your command. Please try again." 
@@ -365,8 +374,6 @@ app.post('/slack/commands', async (req, res) => {
 // Slack interaction handler
 app.post('/slack/actions', async (req, res) => {
   try {
-    console.log('Received action with body:', req.body);
-    
     if (!req.body.payload) {
       console.log('Missing payload in request');
       return res.status(200).json({ 
@@ -375,7 +382,6 @@ app.post('/slack/actions', async (req, res) => {
     }
     
     const payload = JSON.parse(req.body.payload);
-    console.log('Parsed payload:', JSON.stringify(payload));
     
     // Extract user and action data from the payload
     const { user, actions, callback_id } = payload;
@@ -414,12 +420,16 @@ app.post('/slack/actions', async (req, res) => {
       }
       
       // Try to add a reaction to the original message
-      if (payload.channel && payload.message_ts) {
-        // For interactive messages, we can get the original message timestamp
-        await addReaction(payload.channel.id, payload.message_ts, user.id);
-      } else if (payload.channel && payload.original_message && payload.original_message.ts) {
-        // For message attachments, we need to use the original_message.ts
-        await addReaction(payload.channel.id, payload.original_message.ts, user.id);
+      if (process.env.SLACK_BOT_TOKEN && process.env.SLACK_BOT_TOKEN.startsWith('xoxb-')) {
+        if (payload.channel && payload.message_ts) {
+          // For interactive messages, we can get the original message timestamp
+          await addReaction(payload.channel.id, payload.message_ts, user.id);
+        } else if (payload.channel && payload.original_message && payload.original_message.ts) {
+          // For message attachments, we need to use the original_message.ts
+          await addReaction(payload.channel.id, payload.original_message.ts, user.id);
+        }
+      } else {
+        console.log('Skipping reaction - SLACK_BOT_TOKEN not properly configured');
       }
       
       // Keep the original message with voting buttons intact for everyone
@@ -430,56 +440,18 @@ app.post('/slack/actions', async (req, res) => {
       });
     }
     
-    return res.status(200).json({
-      response_type: 'ephemeral',
-      text: "Unknown action type."
+    return res.status(200).json({ 
+      text: "Unrecognized action." 
     });
-  } catch (error) {
-    console.error('Error handling action:', error);
-    return res.status(200).json({
-      response_type: 'ephemeral',
-      text: "Sorry, there was an error processing your action. Please try again."
+  } catch (err) {
+    console.error('Exception handling action:', err);
+    return res.status(200).json({ 
+      text: "Sorry, there was an error processing your action. Please try again." 
     });
   }
 });
 
-// Format votes for display
-function formatVotesForDisplay(session, votes) {
-  if (!votes || votes.length === 0) {
-    return `No votes yet for issue: *${session.issue}*`;
-  }
-  
-  // Count votes by value and collect usernames for each vote value
-  const voteCounts = {};
-  const voteUsers = {};
-  
-  votes.forEach(vote => {
-    const voteValue = vote.vote.toString();
-    // Count votes
-    voteCounts[voteValue] = (voteCounts[voteValue] || 0) + 1;
-    
-    // Collect usernames
-    if (!voteUsers[voteValue]) {
-      voteUsers[voteValue] = [];
-    }
-    const username = vote.username || `<@${vote.user_id}>`;
-    voteUsers[voteValue].push(username);
-  });
-  
-  // Format results
-  let result = `*Results for "${session.issue}"*\n`;
-  result += `Total votes: ${votes.length}\n\n`;
-  
-  // Add vote distribution with usernames
-  result += "*Vote distribution:*\n";
-  Object.keys(voteCounts).sort((a, b) => parseInt(a) - parseInt(b)).forEach(value => {
-    const userList = voteUsers[value].join(', ');
-    result += `• ${value}: ${voteCounts[value]} vote${voteCounts[value] > 1 ? 's' : ''} (${userList})\n`;
-  });
-  
-  return result;
-}
-
+// Start the server
 app.listen(port, () => {
   console.log(`Slack Planning Poker running on port ${port}`);
   console.log(`Test your server by visiting http://localhost:${port}`);
