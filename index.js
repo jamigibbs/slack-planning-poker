@@ -237,7 +237,15 @@ function formatVotesForDisplay(session, votes) {
 app.post('/slack/commands', async (req, res) => {
   try {
     // Check if we have the required fields
-    const { text, user_id, channel_id, command, response_url } = req.body;
+    const { text, user_id, channel_id, command, response_url, thread_ts } = req.body;
+    
+    // Log the request body for debugging
+    console.log('Slack command request:', JSON.stringify({
+      command,
+      channel_id,
+      has_thread_ts: !!thread_ts,
+      thread_ts
+    }));
     
     // Immediately acknowledge receipt to prevent timeout
     res.status(200).json({
@@ -277,10 +285,18 @@ app.post('/slack/commands', async (req, res) => {
       
       const resultsText = formatVotesForDisplay(session, votes);
       
-      return sendDelayedResponse(response_url, {
+      const responseMessage = {
         response_type: "in_channel",
         text: `:tada: *PLANNING POKER RESULTS* :tada:\n${resultsText}`
-      });
+      };
+      
+      // If this command was used in a thread, maintain the thread
+      if (thread_ts) {
+        responseMessage.thread_ts = thread_ts;
+        console.log('Adding thread_ts to reveal response:', thread_ts);
+      }
+      
+      return sendDelayedResponse(response_url, responseMessage);
     }
     
     if (command !== '/poker' && command !== '/poker-reveal') {
@@ -328,7 +344,7 @@ app.post('/slack/commands', async (req, res) => {
     }
     
     // Send the response with voting buttons
-    return sendDelayedResponse(response_url, {
+    const responseMessage = {
       response_type: "in_channel",
       text: `Planning Poker started by <@${user_id}> for: *${formattedIssue}*\nSession ID: ${sessionId}\n\nOnce everyone has voted, type \`/poker-reveal\` to reveal the results.`,
       attachments: [
@@ -346,7 +362,15 @@ app.post('/slack/commands', async (req, res) => {
           ]
         }
       ]
-    });
+    };
+    
+    // If this command was used in a thread, maintain the thread
+    if (thread_ts) {
+      responseMessage.thread_ts = thread_ts;
+      console.log('Adding thread_ts to response:', thread_ts);
+    }
+    
+    return sendDelayedResponse(response_url, responseMessage);
   } catch (err) {
     console.error('Exception handling slash command:', err);
     
@@ -365,10 +389,14 @@ app.post('/slack/commands', async (req, res) => {
 // Helper function to send delayed responses
 async function sendDelayedResponse(responseUrl, message) {
   try {
+    // Log the message being sent for debugging
+    console.log('Sending delayed response:', JSON.stringify(message));
     await axios.post(responseUrl, message);
     return true;
   } catch (error) {
     console.error('Error sending delayed response:', error);
+    console.error('Response URL:', responseUrl);
+    console.error('Message:', JSON.stringify(message));
     return false;
   }
 }
