@@ -22,6 +22,15 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
   - A visual "Processing..." message will be shown during start up.
   - Subsequent requests will be much faster
 
+## Usage
+
+1. In any Slack channel where the app is invited, type `/poker [issue]` to start a session
+   - You can use a GitHub link, description, or any other text to describe the issue you're estimating.
+2. Team members click the voting buttons to submit their estimates
+   - Each user can vote once, but can change their vote
+   - Emoji reactions will appear on the message to indicate that a vote has been cast
+3. When ready, type `/poker-reveal` to show all votes with usernames
+
 ## Setup
 
 ### Prerequisites
@@ -29,6 +38,7 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
 - Node.js and npm
 - A Slack workspace with permission to add apps
 - A Supabase account and project
+- A hosting service (e.g. Render, Heroku, Vercel, DigitalOcean, etc.)
 
 ### Supabase Configuration
 
@@ -57,26 +67,53 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
    );
    ```
 
-### Slack App Configuration
+### Add to a Slack workspace
 
-1. Create a new Slack App at https://api.slack.com/apps
-2. Under "Slash Commands", create two commands:
+#### Create a new Slack App
+
+1. Go to https://api.slack.com/apps
+2. Click "Create New App"
+3. Choose "From scratch"
+4. Enter "Planning Poker" as the app name and select your workspace
+
+#### Configure bot permissions
+
+1. In the left sidebar, click on "OAuth & Permissions"
+2. Under "Scopes", add these Bot Token Scopes:
+  - `commands` (to create slash commands)
+  - `reactions:write` (to add emoji reactions)
+
+#### Create slash commands
+
+1. In the left sidebar, click on "Slash Commands"
+2. Click "Create New Command"
+3. Create two commands:
    - Command: `/poker`
-     - Request URL: `https://your-domain.com/slack/commands`
+     - Request URL: `https://slack-planning-poker.onrender.com/slack/commands`
      - Short Description: "Start a planning poker session"
-   - Command: `/poker-reveal`
-     - Request URL: `https://your-domain.com/slack/commands`
+     - Usage hint: "[issue link]"
+   - Command: `/poker-reveal`    
+     - Request URL: `https://slack-planning-poker.onrender.com/slack/commands`
      - Short Description: "Reveal planning poker results"
-3. Under "Interactivity & Shortcuts":
-   - Turn on Interactivity
-   - Set Request URL to `https://your-domain.com/slack/actions`
-4. Under "OAuth & Permissions":
-   - Add the following Bot Token Scopes:
-     - `commands`
-     - `chat:write`
-     - `reactions:write`
-   - Install the app to your workspace
-   - Copy the "Bot User OAuth Token" for your `.env` file
+
+#### Set up interactivity
+
+1. In the left sidebar, click on "Interactivity & Shortcuts"
+2. Toggle "Interactivity" to **On**
+3. Set the Request URL to `https://slack-planning-poker.onrender.com/slack/actions`
+
+#### Install the app to your workspace
+
+1. In the left sidebar, click "Install App"
+2. Click "Install to [Workspace]"
+3. Review permissions and click "Allow"
+
+#### Final steps
+
+- Invite your bot to a channel: `/invite @PlanningPoker`
+- Test the bot with `/poker [issue]`
+- Vote using the buttons
+- Reveal results with `/poker-reveal`
 
 ### Local Setup
 
@@ -90,26 +127,17 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
    ```
 3. Install dependencies:
    ```bash
-   npm install
+   yarn install
    ```
 4. Start the server:
    ```bash
-   npm start
+   yarn start
    ```
 5. Use `ngrok` to expose your localhost to Slack:
    ```bash
    ngrok http 3000
    ```
 6. Update your Slack App's request URLs with the ngrok URL
-
-## Usage
-
-1. In any Slack channel where the app is installed, type `/poker [issue]` to start a session
-   - You can use a GitHub link, description, or any other text to describe the issue you're estimating.
-2. Team members click the voting buttons to submit their estimates
-   - Each user can vote once, but can change their vote
-   - Emoji reactions will appear on the message to indicate that a vote has been cast
-3. When ready, type `/poker-reveal` to show all votes with usernames
 
 ## Troubleshooting
 
