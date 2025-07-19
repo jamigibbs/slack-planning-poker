@@ -17,6 +17,10 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
 - **Data Storage**:
   - All votes and sessions stored in Supabase
   - Session history maintained per channel
+- **Administration**:
+  - Admin cleanup endpoint for database management
+  - Configurable retention period for old sessions
+  - Browser and API access options
 - **Cold Start**:
   - The bot might take a few seconds to start up on the first request. 
   - A visual "Processing..." message will be shown during start up.
@@ -35,15 +39,15 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
 
 ### Prerequisites
 
-- Node.js and npm
+- Node.js and npm/yarn
 - A Slack workspace with permission to add apps
 - A Supabase account and project
-- A hosting service (e.g. Render, Heroku, Vercel, DigitalOcean, etc.)
+- A hosting service (e.g. Render)
 
 ### Supabase Configuration
 
 1. Create a new Supabase project
-2. Set up the following tables:
+2. Add the following tables:
 
    **sessions**
    ```sql
@@ -124,6 +128,7 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
    SUPABASE_KEY=your-supabase-key
    PORT=3000
    SLACK_BOT_TOKEN=xoxb-your-slack-bot-token
+   ADMIN_KEY=your-secure-admin-key
    ```
 3. Install dependencies:
    ```bash
@@ -138,6 +143,31 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
    ngrok http 3000
    ```
 6. Update your Slack App's request URLs with the ngrok URL
+
+## Administration
+
+### Database Cleanup
+
+To manage database size,  you can use the admin cleanup endpoint to remove old sessions and their associated votes.
+
+#### Setup
+
+1. Add an `ADMIN_KEY` to your `.env` file (see Local Setup section)
+2. Use one of the following methods to trigger cleanup:
+
+**Browser Method**:
+```
+https://slack-planning-poker.onrender.com/admin/cleanup?key=your-admin-key&days=30
+```
+
+**API Method**:
+```bash
+curl -X POST https://slack-planning-poker.onrender.com/admin/cleanup \
+  -H "Content-Type: application/json" \
+  -d '{"key":"your-admin-key","days":30}'
+```
+
+The `days` parameter is optional and defaults to 30 if not specified. This determines how many days of sessions to keep (older sessions will be deleted).
 
 ## Troubleshooting
 

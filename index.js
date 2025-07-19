@@ -41,6 +41,68 @@ app.post('/slack/verify', (req, res) => {
   res.status(200).json({ text: "Verification successful!" });
 });
 
+// Add endpoints to manually trigger cleanup (protected by a secret key)
+// Support both POST with JSON body and GET with query parameters for browser access
+
+// POST endpoint for programmatic access
+app.post('/admin/cleanup', async (req, res) => {
+  // Simple security check - require a secret key
+  const { key, days } = req.body;
+  if (!key || key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  // Run the cleanup with optional days parameter
+  const daysToKeep = days ? parseInt(days, 10) : 30;
+  const result = await cleanupOldSessions(daysToKeep);
+  
+  res.status(200).json(result);
+});
+
+// GET endpoint for browser access
+app.get('/admin/cleanup', async (req, res) => {
+  // Simple security check - require a secret key
+  const { key, days } = req.query;
+  if (!key || key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ success: false, error: 'Unauthorized' });
+  }
+  
+  // Run the cleanup with optional days parameter
+  const daysToKeep = days ? parseInt(days, 10) : 30;
+  const result = await cleanupOldSessions(daysToKeep);
+  
+  // Return a more browser-friendly response
+  res.send(`
+    <html>
+      <head>
+        <title>Database Cleanup Results</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+          .success { color: green; }
+          .error { color: red; }
+          pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+        <h1>Database Cleanup Results</h1>
+        <div class="${result.success ? 'success' : 'error'}">
+          <h2>${result.success ? 'Success!' : 'Error'}</h2>
+          ${result.success 
+            ? `<p>Successfully cleaned up:</p>
+               <ul>
+                 <li><strong>${result.deletedSessions}</strong> old sessions</li>
+                 <li><strong>${result.deletedVotes}</strong> associated votes</li>
+               </ul>` 
+            : `<p>Error: ${result.error}</p>`
+          }
+        </div>
+        <h3>Full Response:</h3>
+        <pre>${JSON.stringify(result, null, 2)}</pre>
+      </body>
+    </html>
+  `);
+});
+
 /**
  * UTILITY FUNCTIONS
  */
@@ -236,6 +298,8 @@ function formatVotesForDisplay(session, votes) {
 // Slack slash command handler
 app.post('/slack/commands', async (req, res) => {
   try {
+    console.log('Received slash command request:', JSON.stringify(req.body));
+    
     // Check if we have the required fields
     const { text, user_id, channel_id, command, response_url } = req.body;
     
@@ -376,6 +440,8 @@ async function sendDelayedResponse(responseUrl, message) {
 // Slack interaction handler
 app.post('/slack/actions', async (req, res) => {
   try {
+    console.log('Received action request:', JSON.stringify(req.body));
+    
     if (!req.body.payload) {
       console.log('Missing payload in request');
       return res.status(200).json({ 
@@ -458,6 +524,73 @@ app.post('/slack/actions', async (req, res) => {
     });
   }
 });
+
+/**
+ * DATABASE CLEANUP
+ */
+
+// Function to clean up old sessions and their votes
+async function cleanupOldSessions(daysToKeep = 30) {
+  try {
+    // Calculate the cutoff date
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+    const cutoffDateString = cutoffDate.toISOString();
+    
+    console.log(`Cleaning up sessions older than ${daysToKeep} days (before ${cutoffDateString})`);
+    
+    // First get the IDs of sessions to be deleted
+    const { data: oldSessions, error: fetchError } = await supabase
+      .from('sessions')
+      .select('id')
+      .lt('created_at', cutoffDateString);
+      
+    if (fetchError) {
+      console.error('Error fetching old sessions:', fetchError);
+      return { success: false, error: fetchError };
+    }
+    
+    if (!oldSessions || oldSessions.length === 0) {
+      console.log('No old sessions to clean up');
+      return { success: true, deletedSessions: 0, deletedVotes: 0 };
+    }
+    
+    const sessionIds = oldSessions.map(session => session.id);
+    console.log(`Found ${sessionIds.length} old sessions to clean up`);
+    
+    // Delete votes for these sessions first (due to foreign key constraint)
+    const { error: votesError, count: votesDeleted } = await supabase
+      .from('votes')
+      .delete({ count: 'exact' })
+      .in('session_id', sessionIds);
+      
+    if (votesError) {
+      console.error('Error deleting votes:', votesError);
+      return { success: false, error: votesError };
+    }
+    
+    // Now delete the sessions
+    const { error: sessionsError, count: sessionsDeleted } = await supabase
+      .from('sessions')
+      .delete({ count: 'exact' })
+      .in('id', sessionIds);
+      
+    if (sessionsError) {
+      console.error('Error deleting sessions:', sessionsError);
+      return { success: false, error: sessionsError };
+    }
+    
+    console.log(`Successfully cleaned up ${sessionsDeleted} sessions and ${votesDeleted} votes`);
+    return { 
+      success: true, 
+      deletedSessions: sessionsDeleted, 
+      deletedVotes: votesDeleted 
+    };
+  } catch (err) {
+    console.error('Exception during cleanup:', err);
+    return { success: false, error: err };
+  }
+}
 
 // Start the server
 app.listen(port, () => {
