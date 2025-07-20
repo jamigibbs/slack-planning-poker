@@ -158,6 +158,52 @@ async function handlePokerRevealCommand(req, res) {
 }
 
 /**
+ * Handle reveal action from Show Results button
+ * @param {string} sessionId - The session ID to reveal
+ * @param {string} channelId - The channel ID
+ * @param {string} teamId - The team ID
+ * @param {Object} res - Express response object
+ */
+async function handleRevealAction(sessionId, channelId, teamId, res) {
+  try {
+    // Get workspace-specific bot token
+    const botToken = await getBotToken(teamId);
+    
+    // Get votes for this session
+    const { success: voteSuccess, votes, error: voteError } = await getVotesForSession(sessionId);
+    
+    if (!voteSuccess) {
+      logger.error('Error retrieving votes:', voteError);
+      return res.status(200).json({
+        response_type: "ephemeral",
+        text: "Error: Could not retrieve votes for the current session." 
+      });
+    }
+    
+    // Get the session details to get the issue
+    const { success: sessionSuccess, session: fullSession } = await getLatestSessionForChannel(channelId);
+    const issue = sessionSuccess && fullSession ? fullSession.issue : 'Unknown issue';
+    
+    // Format and send the results
+    const message = formatPokerResults(votes, issue);
+    
+    // Add reaction to indicate session ended (using workspace-specific token)
+    await addReaction(channelId, null, null, null, botToken);
+    
+    return res.status(200).json({
+      ...message,
+      replace_original: true // Replace the voting message with results
+    });
+  } catch (err) {
+    logger.error('Error in handleRevealAction:', err);
+    return res.status(200).json({ 
+      response_type: "ephemeral",
+      text: "Sorry, there was an error revealing the results. Please try again." 
+    });
+  }
+}
+
+/**
  * Handle Slack interactive actions (button clicks)
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
