@@ -76,14 +76,11 @@ function formatPokerResults(votes, issue) {
     voteCounts[vote.vote].users.push(vote.username || `<@${vote.user_id}>`);
   });
   
-  // Create vote distribution fields for Block Kit
-  const voteFields = [];
+  // Create vote distribution text in bullet format
+  let voteDistributionText = "*Vote distribution:*\n";
   Object.keys(voteCounts).sort((a, b) => a - b).forEach(value => {
     const { count, users } = voteCounts[value];
-    voteFields.push({
-      type: "mrkdwn",
-      text: `*${value} points*\n${count} vote${count > 1 ? 's' : ''} (${users.join(', ')})`
-    });
+    voteDistributionText += `• ${value} points: ${count} vote${count > 1 ? 's' : ''} (${users.join(', ')})\n`;
   });
 
   // Create blocks for rich formatting
@@ -99,33 +96,13 @@ function formatPokerResults(votes, issue) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Issue:* ${formattedIssue}\n*Total Votes:* ${votes.length}`
+        text: `*Issue:* ${formattedIssue}\n*Total votes:* ${votes.length}\n\n${voteDistributionText}`
       }
     },
     {
       type: "divider"
     }
   ];
-
-  // Add vote distribution section
-  if (voteFields.length > 0) {
-    blocks.push({
-      type: "section",
-      text: {
-        type: "mrkdwn",
-        text: "*Vote Distribution:*"
-      }
-    });
-
-    // Add vote fields in pairs (Block Kit supports up to 10 fields per section)
-    for (let i = 0; i < voteFields.length; i += 2) {
-      const fieldsSlice = voteFields.slice(i, i + 2);
-      blocks.push({
-        type: "section",
-        fields: fieldsSlice
-      });
-    }
-  }
 
   // Add context footer
   blocks.push({
@@ -140,9 +117,14 @@ function formatPokerResults(votes, issue) {
   
   return {
     response_type: "in_channel",
-    blocks: blocks,
+    attachments: [
+      {
+        color: "#3AA3E3", // Informational blue color
+        blocks: blocks
+      }
+    ],
     // Fallback text for clients that don't support Block Kit
-    text: `Planning Poker Results for "${formattedIssue}" - ${votes.length} total votes`
+    text: `Planning Poker Results for "${formattedIssue}"\n${voteDistributionText.replace(/\*/g, '').replace(/\n$/, '')}`
   };
 }
 

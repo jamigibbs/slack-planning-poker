@@ -67,41 +67,37 @@ describe('Response Formatters', () => {
       const result = formatPokerResults(votes, 'Test issue');
       
       expect(result.response_type).toBe('in_channel');
-      expect(result.blocks).toBeDefined();
-      expect(result.text).toBe('Planning Poker Results for "Test issue" - 3 total votes');
+      expect(result.attachments).toBeDefined();
+      expect(result.text).toContain('Planning Poker Results for "Test issue"');
+      expect(result.text).toContain('Vote distribution:');
+      expect(result.text).toContain('• 3 points: 2 votes (user1, user3)');
+      expect(result.text).toContain('• 5 points: 1 vote (user2)');
+      
+      // Check attachment with colored border
+      expect(result.attachments).toHaveLength(1);
+      expect(result.attachments[0].color).toBe('#3AA3E3');
+      expect(result.attachments[0].blocks).toBeDefined();
+      
+      const blocks = result.attachments[0].blocks;
       
       // Check header block
-      expect(result.blocks[0].type).toBe('header');
-      expect(result.blocks[0].text.text).toBe('🎯 Planning Poker Results');
+      expect(blocks[0].type).toBe('header');
+      expect(blocks[0].text.text).toBe('🎯 Planning Poker Results');
       
-      // Check issue and total votes section
-      expect(result.blocks[1].type).toBe('section');
-      expect(result.blocks[1].text.text).toContain('*Issue:* Test issue');
-      expect(result.blocks[1].text.text).toContain('*Total Votes:* 3');
+      // Check main content section with issue, votes, and distribution
+      expect(blocks[1].type).toBe('section');
+      const mainText = blocks[1].text.text;
+      expect(mainText).toContain('*Issue:* Test issue');
+      expect(mainText).toContain('*Total votes:* 3');
+      expect(mainText).toContain('*Vote distribution:*');
+      expect(mainText).toContain('• 3 points: 2 votes (user1, user3)');
+      expect(mainText).toContain('• 5 points: 1 vote (user2)');
       
       // Check divider
-      expect(result.blocks[2].type).toBe('divider');
-      
-      // Check vote distribution header
-      expect(result.blocks[3].type).toBe('section');
-      expect(result.blocks[3].text.text).toBe('*Vote Distribution:*');
-      
-      // Check vote fields
-      expect(result.blocks[4].type).toBe('section');
-      expect(result.blocks[4].fields).toBeDefined();
-      
-      // Verify vote data is present in fields
-      const fieldsText = JSON.stringify(result.blocks[4].fields);
-      expect(fieldsText).toContain('*3 points*');
-      expect(fieldsText).toContain('2 votes');
-      expect(fieldsText).toContain('user1');
-      expect(fieldsText).toContain('user3');
-      expect(fieldsText).toContain('*5 points*');
-      expect(fieldsText).toContain('1 vote');
-      expect(fieldsText).toContain('user2');
+      expect(blocks[2].type).toBe('divider');
       
       // Check context footer
-      const lastBlock = result.blocks[result.blocks.length - 1];
+      const lastBlock = blocks[blocks.length - 1];
       expect(lastBlock.type).toBe('context');
       expect(lastBlock.elements[0].text).toContain('Session completed');
     });
