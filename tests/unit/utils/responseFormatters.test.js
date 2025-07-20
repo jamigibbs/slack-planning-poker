@@ -67,14 +67,43 @@ describe('Response Formatters', () => {
       const result = formatPokerResults(votes, 'Test issue');
       
       expect(result.response_type).toBe('in_channel');
-      expect(result.text).toContain(':tada: PLANNING POKER RESULTS :tada:');
-      expect(result.text).toContain('Results for "Test issue"');
-      expect(result.text).toContain('Total votes: 3');
-      expect(result.text).toContain('Vote distribution:');
-      expect(result.text).toContain('• 3 points: 2 votes');
-      expect(result.text).toContain('• 5 points: 1 vote');
-      expect(result.text).toContain('user1');
-      expect(result.text).toContain('user2');
+      expect(result.blocks).toBeDefined();
+      expect(result.text).toBe('Planning Poker Results for "Test issue" - 3 total votes');
+      
+      // Check header block
+      expect(result.blocks[0].type).toBe('header');
+      expect(result.blocks[0].text.text).toBe('🎯 Planning Poker Results');
+      
+      // Check issue and total votes section
+      expect(result.blocks[1].type).toBe('section');
+      expect(result.blocks[1].text.text).toContain('*Issue:* Test issue');
+      expect(result.blocks[1].text.text).toContain('*Total Votes:* 3');
+      
+      // Check divider
+      expect(result.blocks[2].type).toBe('divider');
+      
+      // Check vote distribution header
+      expect(result.blocks[3].type).toBe('section');
+      expect(result.blocks[3].text.text).toBe('*Vote Distribution:*');
+      
+      // Check vote fields
+      expect(result.blocks[4].type).toBe('section');
+      expect(result.blocks[4].fields).toBeDefined();
+      
+      // Verify vote data is present in fields
+      const fieldsText = JSON.stringify(result.blocks[4].fields);
+      expect(fieldsText).toContain('*3 points*');
+      expect(fieldsText).toContain('2 votes');
+      expect(fieldsText).toContain('user1');
+      expect(fieldsText).toContain('user3');
+      expect(fieldsText).toContain('*5 points*');
+      expect(fieldsText).toContain('1 vote');
+      expect(fieldsText).toContain('user2');
+      
+      // Check context footer
+      const lastBlock = result.blocks[result.blocks.length - 1];
+      expect(lastBlock.type).toBe('context');
+      expect(lastBlock.elements[0].text).toContain('Session completed');
     });
   });
 

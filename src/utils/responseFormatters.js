@@ -76,20 +76,73 @@ function formatPokerResults(votes, issue) {
     voteCounts[vote.vote].users.push(vote.username || `<@${vote.user_id}>`);
   });
   
-  // Format the results
-  let resultsText = ":tada: PLANNING POKER RESULTS :tada:\n";
-  resultsText += `Results for "${formattedIssue}"\n`;
-  resultsText += `Total votes: ${votes.length}\n`;
-  resultsText += "Vote distribution:\n";
-  
+  // Create vote distribution fields for Block Kit
+  const voteFields = [];
   Object.keys(voteCounts).sort((a, b) => a - b).forEach(value => {
     const { count, users } = voteCounts[value];
-    resultsText += `• ${value} points: ${count} vote${count > 1 ? 's' : ''} (${users.join(', ')})\n`;
+    voteFields.push({
+      type: "mrkdwn",
+      text: `*${value} points*\n${count} vote${count > 1 ? 's' : ''} (${users.join(', ')})`
+    });
+  });
+
+  // Create blocks for rich formatting
+  const blocks = [
+    {
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "🎯 Planning Poker Results"
+      }
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Issue:* ${formattedIssue}\n*Total Votes:* ${votes.length}`
+      }
+    },
+    {
+      type: "divider"
+    }
+  ];
+
+  // Add vote distribution section
+  if (voteFields.length > 0) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "*Vote Distribution:*"
+      }
+    });
+
+    // Add vote fields in pairs (Block Kit supports up to 10 fields per section)
+    for (let i = 0; i < voteFields.length; i += 2) {
+      const fieldsSlice = voteFields.slice(i, i + 2);
+      blocks.push({
+        type: "section",
+        fields: fieldsSlice
+      });
+    }
+  }
+
+  // Add context footer
+  blocks.push({
+    type: "context",
+    elements: [
+      {
+        type: "mrkdwn",
+        text: "Session completed • Results visible to channel"
+      }
+    ]
   });
   
   return {
     response_type: "in_channel",
-    text: resultsText
+    blocks: blocks,
+    // Fallback text for clients that don't support Block Kit
+    text: `Planning Poker Results for "${formattedIssue}" - ${votes.length} total votes`
   };
 }
 
