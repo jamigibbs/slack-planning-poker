@@ -14,6 +14,6 @@ router.get('/', (req, res) => {
 // Mount routes
 router.use('/slack', slackRoutes);
 router.use('/admin', adminRoutes);
-router.use('/', oauthRoutes); // OAuth routes at root level
+router.use('/slack', oauthRoutes); // OAuth routes under /slack
 
 module.exports = router;

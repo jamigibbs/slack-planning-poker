@@ -1,6 +1,6 @@
 # Step 7: Installation Flow
 ## For New Workspaces:
-1. Installation URL: https://yourdomain.com/install
+1. Installation URL: https://slack-planning-poker.onrender.com/slack/install
 2. User clicks → Redirected to Slack OAuth
 3. User authorizes → Redirected to /oauth/callback
 4. App saves tokens → Redirected to success page

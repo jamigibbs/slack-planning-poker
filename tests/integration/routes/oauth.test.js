@@ -26,10 +26,10 @@ describe('OAuth Routes', () => {
     }
   });
 
-  describe('GET /install', () => {
+  describe('GET /slack/install', () => {
     test('should redirect to Slack OAuth URL', async () => {
       const response = await request(app)
-        .get('/install')
+        .get('/slack/install')
         .expect(302);
 
       expect(response.headers.location).toMatch(/^https:\/\/slack\.com\/oauth\/v2\/authorize/);
@@ -39,7 +39,7 @@ describe('OAuth Routes', () => {
     });
   });
 
-  describe('GET /oauth/callback', () => {
+  describe('GET /slack/oauth/callback', () => {
     test('should handle successful OAuth callback', async () => {
       // Mock Slack OAuth token exchange
       const mockTokenResponse = {
@@ -65,7 +65,7 @@ describe('OAuth Routes', () => {
       teamService.saveTeamInstallation.mockResolvedValue({ success: true });
 
       const response = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .query({ code: 'test-auth-code' })
         .expect(302);
 
@@ -84,7 +84,7 @@ describe('OAuth Routes', () => {
 
     test('should handle OAuth error', async () => {
       const response = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .query({ error: 'access_denied' })
         .expect(400);
 
@@ -93,7 +93,7 @@ describe('OAuth Routes', () => {
 
     test('should handle missing authorization code', async () => {
       const response = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .expect(400);
 
       expect(response.text).toContain('Missing authorization code');
@@ -111,7 +111,7 @@ describe('OAuth Routes', () => {
         .reply(200, mockTokenResponse);
 
       const response = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .query({ code: 'invalid-code' })
         .expect(400);
 
@@ -143,7 +143,7 @@ describe('OAuth Routes', () => {
       });
 
       const response = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .query({ code: 'test-auth-code' })
         .expect(500);
 
@@ -157,7 +157,7 @@ describe('OAuth Routes', () => {
         .replyWithError('Network error');
 
       const response = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .query({ code: 'test-auth-code' })
         .expect(500);
 
@@ -165,10 +165,10 @@ describe('OAuth Routes', () => {
     });
   });
 
-  describe('GET /oauth/success', () => {
+  describe('GET /slack/oauth/success', () => {
     test('should display success page', async () => {
       const response = await request(app)
-        .get('/oauth/success')
+        .get('/slack/oauth/success')
         .expect(200);
 
       expect(response.text).toContain('Planning Poker Installed Successfully!');
@@ -179,7 +179,7 @@ describe('OAuth Routes', () => {
 
     test('should have proper HTML structure', async () => {
       const response = await request(app)
-        .get('/oauth/success')
+        .get('/slack/oauth/success')
         .expect(200);
 
       expect(response.text).toContain('<!DOCTYPE html>');
@@ -193,7 +193,7 @@ describe('OAuth Routes', () => {
     test('should complete full OAuth flow successfully', async () => {
       // Step 1: Start OAuth flow
       const installResponse = await request(app)
-        .get('/install')
+        .get('/slack/install')
         .expect(302);
 
       expect(installResponse.headers.location).toMatch(/^https:\/\/slack\.com\/oauth\/v2\/authorize/);
@@ -221,7 +221,7 @@ describe('OAuth Routes', () => {
       teamService.saveTeamInstallation.mockResolvedValue({ success: true });
 
       const callbackResponse = await request(app)
-        .get('/oauth/callback')
+        .get('/slack/oauth/callback')
         .query({ code: 'test-auth-code' })
         .expect(302);
 
@@ -229,7 +229,7 @@ describe('OAuth Routes', () => {
 
       // Step 3: Display success page
       const successResponse = await request(app)
-        .get('/oauth/success')
+        .get('/slack/oauth/success')
         .expect(200);
 
       expect(successResponse.text).toContain('Planning Poker Installed Successfully!');
