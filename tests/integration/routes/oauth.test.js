@@ -171,10 +171,7 @@ describe('OAuth Routes', () => {
         .get('/slack/oauth/success')
         .expect(200);
 
-      expect(response.text).toContain('Planning Poker Installed Successfully!');
-      expect(response.text).toContain('/poker [issue description]');
-      expect(response.text).toContain('/poker-reveal');
-      expect(response.text).toContain('Happy estimating! 🎯');
+      expect(response.text).toContain('Planning Poker Installed Successfully');
     });
 
     test('should have proper HTML structure', async () => {

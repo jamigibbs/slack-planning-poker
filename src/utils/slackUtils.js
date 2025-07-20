@@ -18,11 +18,20 @@ function getRandomEmoji() {
  * @param {string|null} reaction - Optional specific reaction to add, otherwise random
  * @returns {Promise<Object>} Result of the operation
  */
-async function addReaction(channel, timestamp, user, reaction = null) {
+async function addReaction(channel, timestamp, user, reaction = null, botToken = null) {
   try {
+    // Skip if no timestamp provided (can't add reaction without message timestamp)
+    if (!timestamp) {
+      logger.log('Skipping reaction - no message timestamp provided');
+      return { success: false, error: 'No timestamp provided' };
+    }
+    
     if (!reaction) {
       reaction = getRandomEmoji();
     }
+    
+    // Use provided bot token or fallback to environment variable
+    const token = botToken || process.env.SLACK_BOT_TOKEN;
     
     const response = await axios.post('https://slack.com/api/reactions.add', {
       channel: channel,
@@ -30,8 +39,8 @@ async function addReaction(channel, timestamp, user, reaction = null) {
       name: reaction
     }, {
       headers: {
-        'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json; charset=utf-8'
       }
     });
     
@@ -39,7 +48,7 @@ async function addReaction(channel, timestamp, user, reaction = null) {
       // Handle specific error cases
       if (response.data.error === 'already_reacted') {
         // Try again with a different emoji
-        return addReaction(channel, timestamp, user, getRandomEmoji());
+        return addReaction(channel, timestamp, user, getRandomEmoji(), botToken);
       } else if (response.data.error === 'not_in_channel') {
         logger.log(`Bot needs to be invited to channel ${channel}`);
         return { success: false, error: 'Bot not in channel' };

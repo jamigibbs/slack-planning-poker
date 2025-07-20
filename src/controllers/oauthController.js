@@ -128,13 +128,13 @@ async function oauthSuccess(req, res) {
     </head>
     <body>
       <div class="container">
-        <div class="success-icon">✅</div>
+        <div class="success-icon">🎉</div>
         <h1>Planning Poker Installed Successfully!</h1>
         <p>Great! Planning Poker has been installed to your Slack workspace.</p>
         
         <div class="commands">
           <h3>Available Commands:</h3>
-          <p><code>/poker [issue description]</code> - Start a new planning poker session</p>
+          <p><code>/poker [issue link or description]</code> - Start a new planning poker session</p>
           <p><code>/poker-reveal</code> - Reveal votes for the current session</p>
         </div>
         

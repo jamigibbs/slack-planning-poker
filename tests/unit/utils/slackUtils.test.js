@@ -39,7 +39,7 @@ describe('Slack Utilities', () => {
       axios.post.mockResolvedValue(mockResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123', 'thumbsup');
+      const result = await addReaction('C123', '1234567890.123456', 'U123', 'thumbsup', 'test-bot-token');
       
       // Assert
       expect(axios.post).toHaveBeenCalledWith(
@@ -52,12 +52,22 @@ describe('Slack Utilities', () => {
         {
           headers: {
             'Authorization': 'Bearer test-bot-token',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json; charset=utf-8'
           }
         }
       );
       expect(result.success).toBe(true);
       expect(result.emoji).toBe('thumbsup');
+    });
+
+    test('should skip reaction when no timestamp provided', async () => {
+      // Execute
+      const result = await addReaction('C123', null, 'U123', 'thumbsup', 'test-bot-token');
+      
+      // Assert
+      expect(axios.post).not.toHaveBeenCalled();
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('No timestamp provided');
     });
 
     test('should use random emoji when none provided', async () => {
@@ -83,7 +93,7 @@ describe('Slack Utilities', () => {
         .mockResolvedValueOnce(mockSuccessResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123', 'thumbsup');
+      const result = await addReaction('C123', '1234567890.123456', 'U123', 'thumbsup', 'test-bot-token');
       
       // Assert
       expect(axios.post).toHaveBeenCalledTimes(2);
