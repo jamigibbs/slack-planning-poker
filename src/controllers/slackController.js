@@ -44,7 +44,9 @@ async function handlePokerCommand(req, res) {
     const { success, sessionId, error } = await createSession(channel_id, text);
     
     if (!success) {
-      console.error('Error creating session:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error creating session:', error);
+      }
       return sendDelayedResponse(response_url, { 
         response_type: "ephemeral",
         text: "Error: Could not create a new planning poker session." 
@@ -57,7 +59,9 @@ async function handlePokerCommand(req, res) {
       createPokerSessionMessage(user_id, text, sessionId)
     );
   } catch (err) {
-    console.error('Exception handling poker command:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception handling poker command:', err);
+    }
     
     // If we have a response_url, use it to send an error message
     if (req.body && req.body.response_url) {
@@ -102,6 +106,9 @@ async function handlePokerRevealCommand(req, res) {
     const { success: votesSuccess, votes, error: votesError } = await getSessionVotes(session.id);
     
     if (!votesSuccess) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error retrieving votes:', votesError);
+      }
       return sendDelayedResponse(response_url, { 
         response_type: "ephemeral",
         text: "Error: Could not retrieve votes for the current session." 
@@ -114,7 +121,9 @@ async function handlePokerRevealCommand(req, res) {
       formatPokerResults(votes, session.issue)
     );
   } catch (err) {
-    console.error('Exception handling poker-reveal command:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception handling poker-reveal command:', err);
+    }
     
     // If we have a response_url, use it to send an error message
     if (req.body && req.body.response_url) {
@@ -181,6 +190,9 @@ async function handleInteractiveActions(req, res) {
     );
     
     if (!success) {
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error saving vote:', error);
+      }
       return res.status(200).json({ 
         text: "Error: Could not save your vote." 
       });
@@ -199,7 +211,9 @@ async function handleInteractiveActions(req, res) {
       text: `Your vote (${voteData.vote}) has been recorded.` 
     });
   } catch (err) {
-    console.error('Exception handling interactive action:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception handling interactive action:', err);
+    }
     return res.status(200).json({ 
       text: "Sorry, there was an error processing your action. Please try again." 
     });
