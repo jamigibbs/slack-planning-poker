@@ -35,3 +35,11 @@ jobs:
       
     - name: Run tests
       run: yarn test
+      env:
+        SUPABASE_URL: https://fake-project.supabase.co
+        SUPABASE_KEY: fake-anon-key-for-testing
+        SLACK_BOT_TOKEN: xoxb-fake-token-for-testing
+        SLACK_CLIENT_ID: fake-client-id-for-testing
+        SLACK_CLIENT_SECRET: fake-client-secret-for-testing
+        BASE_URL: https://test-app.example.com
+        NODE_ENV: test

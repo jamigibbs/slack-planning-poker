@@ -15,6 +15,23 @@ const {
   formatPokerResults
 } = require('../utils');
 
+const { getBotTokenForTeam } = require('./oauthController');
+const logger = require('../utils/logger');
+
+/**
+ * Get bot token for the current workspace
+ * @param {string} teamId - Slack team ID
+ * @returns {Promise<string>} Bot token for the workspace
+ */
+async function getBotToken(teamId) {
+  if (!teamId) {
+    return process.env.SLACK_BOT_TOKEN; // Fallback to default token
+  }
+  
+  const workspaceToken = await getBotTokenForTeam(teamId);
+  return workspaceToken || process.env.SLACK_BOT_TOKEN; // Fallback if not found
+}
+
 /**
  * Handle the /poker slash command
  * @param {Object} req - Express request object
@@ -22,9 +39,12 @@ const {
  */
 async function handlePokerCommand(req, res) {
   try {
-    console.log('Received poker command:', JSON.stringify(req.body));
+    logger.log('Received poker command:', JSON.stringify(req.body));
     
-    const { text, user_id, channel_id, response_url } = req.body;
+    const { text, user_id, channel_id, response_url, team_id } = req.body;
+    
+    // Get workspace-specific bot token
+    const botToken = await getBotToken(team_id);
     
     // Acknowledge receipt immediately
     res.status(200).send({
@@ -44,9 +64,7 @@ async function handlePokerCommand(req, res) {
     const { success, sessionId, error } = await createSession(channel_id, text);
     
     if (!success) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error creating session:', error);
-      }
+      logger.error('Error creating session:', error);
       return sendDelayedResponse(response_url, { 
         response_type: "ephemeral",
         text: "Error: Could not create a new planning poker session." 
@@ -54,24 +72,27 @@ async function handlePokerCommand(req, res) {
     }
     
     // Send the response with voting buttons
-    return sendDelayedResponse(
-      response_url, 
-      createPokerSessionMessage(user_id, text, sessionId)
-    );
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception handling poker command:', err);
+    const message = createPokerSessionMessage(user_id, text, sessionId);
+    const delayedSuccess = await sendDelayedResponse(response_url, message);
+    
+    // Add reaction to indicate session started (using workspace-specific token)
+    if (delayedSuccess) {
+      await addReaction(channel_id, null, user_id, null, botToken);
     }
+    
+    return delayedSuccess;
+  } catch (err) {
+    logger.error('Error in handlePokerCommand:', err);
     
     // If we have a response_url, use it to send an error message
     if (req.body && req.body.response_url) {
       return sendDelayedResponse(req.body.response_url, { 
+        response_type: "ephemeral",
         text: "Sorry, there was an error processing your command. Please try again." 
       });
     }
     
-    // Fallback if we've already sent the initial response
-    return;
+    return false;
   }
 }
 
@@ -82,9 +103,12 @@ async function handlePokerCommand(req, res) {
  */
 async function handlePokerRevealCommand(req, res) {
   try {
-    console.log('Received poker-reveal command:', JSON.stringify(req.body));
+    logger.log('Received reveal command:', JSON.stringify(req.body));
     
-    const { channel_id, response_url } = req.body;
+    const { channel_id, response_url, team_id } = req.body;
+    
+    // Get workspace-specific bot token
+    const botToken = await getBotToken(team_id);
     
     // Acknowledge receipt immediately
     res.status(200).send({
@@ -106,9 +130,7 @@ async function handlePokerRevealCommand(req, res) {
     const { success: votesSuccess, votes, error: votesError } = await getSessionVotes(session.id);
     
     if (!votesSuccess) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error retrieving votes:', votesError);
-      }
+      logger.error('Error retrieving votes:', votesError);
       return sendDelayedResponse(response_url, { 
         response_type: "ephemeral",
         text: "Error: Could not retrieve votes for the current session." 
@@ -116,14 +138,17 @@ async function handlePokerRevealCommand(req, res) {
     }
     
     // Format and send the results
-    return sendDelayedResponse(
-      response_url, 
-      formatPokerResults(votes, session.issue)
-    );
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception handling poker-reveal command:', err);
+    const message = formatPokerResults(votes, session.issue);
+    const delayedSuccess = await sendDelayedResponse(response_url, message);
+    
+    // Add reaction to indicate session ended (using workspace-specific token)
+    if (delayedSuccess) {
+      await addReaction(channel_id, null, null, null, botToken);
     }
+    
+    return delayedSuccess;
+  } catch (err) {
+    logger.error('Error in handlePokerRevealCommand:', err);
     
     // If we have a response_url, use it to send an error message
     if (req.body && req.body.response_url) {
@@ -132,8 +157,7 @@ async function handlePokerRevealCommand(req, res) {
       });
     }
     
-    // Fallback if we've already sent the initial response
-    return;
+    return false;
   }
 }
 
@@ -144,10 +168,10 @@ async function handlePokerRevealCommand(req, res) {
  */
 async function handleInteractiveActions(req, res) {
   try {
-    console.log('Received action request:', JSON.stringify(req.body));
+    logger.log('Interactive action received:', JSON.stringify(req.body));
     
     if (!req.body.payload) {
-      console.log('Missing payload in request');
+      logger.log('Missing payload in request');
       return res.status(200).json({ 
         text: "Error: Missing payload in the request." 
       });
@@ -190,9 +214,7 @@ async function handleInteractiveActions(req, res) {
     );
     
     if (!success) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error saving vote:', error);
-      }
+      logger.error('Error saving vote:', error);
       return res.status(200).json({ 
         text: "Error: Could not save your vote." 
       });
@@ -201,7 +223,8 @@ async function handleInteractiveActions(req, res) {
     // Add a reaction to the message to indicate a vote was cast
     if (payload.channel && (payload.message_ts || (payload.original_message && payload.original_message.ts))) {
       const timestamp = payload.message_ts || payload.original_message.ts;
-      addReaction(payload.channel.id, timestamp, payload.user.id);
+      const botToken = await getBotToken(payload.team.id);
+      await addReaction(payload.channel.id, timestamp, payload.user.id, null, botToken);
     }
     
     // Send a confirmation message visible only to the user
@@ -211,9 +234,7 @@ async function handleInteractiveActions(req, res) {
       text: `Your vote (${voteData.vote}) has been recorded.` 
     });
   } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception handling interactive action:', err);
-    }
+    logger.error('Error in handleInteractiveActions:', err);
     return res.status(200).json({ 
       text: "Sorry, there was an error processing your action. Please try again." 
     });

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const voteEmojis = require('./emojiList.json');
+const logger = require('./logger');
 
 /**
  * Get a random emoji from the voteEmojis array
@@ -40,28 +41,20 @@ async function addReaction(channel, timestamp, user, reaction = null) {
         // Try again with a different emoji
         return addReaction(channel, timestamp, user, getRandomEmoji());
       } else if (response.data.error === 'not_in_channel') {
-        if (process.env.NODE_ENV !== 'test') {
-          console.log(`Bot needs to be invited to channel ${channel}`);
-        }
+        logger.log(`Bot needs to be invited to channel ${channel}`);
         return { success: false, error: 'Bot not in channel' };
       } else if (response.data.error === 'missing_scope') {
-        if (process.env.NODE_ENV !== 'test') {
-          console.log('Missing scope for reactions.add. Check bot permissions.');
-        }
+        logger.log('Missing scope for reactions.add. Check bot permissions.');
         return { success: false, error: 'Missing scope' };
       } else {
-        if (process.env.NODE_ENV !== 'test') {
-          console.log('Error adding reaction:', response.data);
-        }
+        logger.log('Error adding reaction:', response.data);
         return { success: false, error: response.data.error };
       }
     }
     
     return { success: true, emoji: reaction };
   } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception adding reaction:', err);
-    }
+    logger.error('Exception adding reaction:', err);
     return { success: false, error: err };
   }
 }
@@ -77,10 +70,7 @@ async function sendDelayedResponse(responseUrl, message) {
     await axios.post(responseUrl, message);
     return true;
   } catch (error) {
-    // Only log in non-test environments
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Error sending delayed response:', error);
-    }
+    logger.error('Error sending delayed response:', error);
     return false;
   }
 }

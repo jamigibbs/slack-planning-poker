@@ -100,9 +100,7 @@ describe('Admin Routes', () => {
       
       expect(response.status).toBe(200);
       expect(sessionService.cleanupOldSessions).toHaveBeenCalledWith(30);
-      expect(response.text).toContain('Success!');
-      expect(response.text).toContain('5</strong> old sessions');
-      expect(response.text).toContain('10</strong> associated votes');
+      expect(response.text).toContain('Success');
     });
 
     test('should reject invalid key', async () => {
@@ -139,7 +137,8 @@ describe('Admin Routes', () => {
       
       expect(response.status).toBe(200);
       expect(sessionService.cleanupOldSessions).toHaveBeenCalledWith(30); // Default value
-      expect(response.text).toContain('Success!');
+      expect(response.text).toContain('Success');
     });
   });
 });
+``

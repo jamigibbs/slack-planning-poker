@@ -5,10 +5,11 @@ const {
   handlePokerRevealCommand, 
   handleInteractiveActions 
 } = require('../controllers/slackController');
+const logger = require('../utils/logger');
 
 // Slack verification endpoint
 router.post('/verify', (req, res) => {
-  console.log('Received verification request:', req.body);
+  logger.log('Received verification request:', req.body);
   res.status(200).json({ challenge: req.body.challenge });
 });
 

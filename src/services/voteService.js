@@ -1,4 +1,5 @@
 const supabase = require('../db/supabase');
+const logger = require('../utils/logger');
 
 /**
  * Save a vote to the database
@@ -24,18 +25,14 @@ async function saveVote(sessionId, userId, vote, username) {
       });
       
     if (error) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error saving vote:', error);
-      }
+      logger.error('Error saving vote:', error);
       return { success: false, error };
     }
     
     return { success: true };
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception saving vote:', err);
-    }
-    return { success: false, error: err };
+  } catch (error) {
+    logger.error('Exception in saveVote:', error);
+    return { success: false, error };
   }
 }
 
@@ -53,9 +50,7 @@ async function getSessionVotes(sessionId) {
       .eq('session_id', sessionId);
 
     if (error) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error fetching votes:', error);
-      }
+      logger.error('Error fetching votes:', error);
       return { success: false, error, votes: null };
     }
 
@@ -67,9 +62,7 @@ async function getSessionVotes(sessionId) {
       .limit(1);
     
     if (sessionError) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error fetching session:', sessionError);
-      }
+      logger.error('Error fetching session:', sessionError);
       return { success: false, error: sessionError, session: null, votes: null };
     }
     
@@ -78,11 +71,9 @@ async function getSessionVotes(sessionId) {
     }
     
     return { success: true, session: sessionData[0], votes: data };
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception fetching votes:', err);
-    }
-    return { success: false, error: err, session: null, votes: null };
+  } catch (error) {
+    logger.error('Exception in getSessionVotes:', error);
+    return { success: false, error, session: null, votes: null };
   }
 }
 
@@ -99,18 +90,14 @@ async function countVotes(sessionId) {
       .eq('session_id', sessionId);
       
     if (error) {
-      if (process.env.NODE_ENV !== 'test') {
-        console.error('Error counting votes:', error);
-      }
+      logger.error('Error counting votes:', error);
       return { success: false, error, count: 0 };
     }
     
     return { success: true, count };
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error('Exception counting votes:', err);
-    }
-    return { success: false, error: err, count: 0 };
+  } catch (error) {
+    logger.error('Exception in countVotes:', error);
+    return { success: false, error, count: 0 };
   }
 }
 
