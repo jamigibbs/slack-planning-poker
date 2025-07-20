@@ -45,6 +45,15 @@ function createPokerSessionMessage(userId, issue, sessionId) {
         color: "#3AA3E3",
         attachment_type: "default",
         actions: generateVotingButtons(sessionId)
+      },
+      {
+        fallback: "Show Results button",
+        callback_id: "reveal",
+        color: "#28a745",
+        attachment_type: "default",
+        actions: [
+          { name: "reveal", text: "📊 Show Results", type: "button", value: JSON.stringify({ sessionId }), style: "primary" }
+        ]
       }
     ]
   };
@@ -110,7 +119,7 @@ function formatPokerResults(votes, issue) {
     elements: [
       {
         type: "mrkdwn",
-        text: "Session completed • Results visible to channel"
+        text: "Voting completed • Results visible to channel"
       }
     ]
   });

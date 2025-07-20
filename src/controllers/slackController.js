@@ -6,6 +6,7 @@ const {
 const { 
   saveVote, 
   getSessionVotes,
+  getVotesForSession,
   hasUserVoted 
 } = require('../services/voteService');
 
