@@ -1,0 +1,93 @@
+const axios = require('axios');
+const voteEmojis = require('./emojiList.json');
+
+/**
+ * Get a random emoji from the voteEmojis array
+ * @returns {string} A random emoji name
+ */
+function getRandomEmoji() {
+  return voteEmojis[Math.floor(Math.random() * voteEmojis.length)];
+}
+
+/**
+ * Add a reaction emoji to a Slack message
+ * @param {string} channel - The channel ID
+ * @param {string} timestamp - The message timestamp
+ * @param {string} user - The user ID
+ * @param {string|null} reaction - Optional specific reaction to add, otherwise random
+ * @returns {Promise<Object>} Result of the operation
+ */
+async function addReaction(channel, timestamp, user, reaction = null) {
+  try {
+    if (!reaction) {
+      reaction = getRandomEmoji();
+    }
+    
+    const response = await axios.post('https://slack.com/api/reactions.add', {
+      channel: channel,
+      timestamp: timestamp,
+      name: reaction
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.data.ok) {
+      // Handle specific error cases
+      if (response.data.error === 'already_reacted') {
+        // Try again with a different emoji
+        return addReaction(channel, timestamp, user, getRandomEmoji());
+      } else if (response.data.error === 'not_in_channel') {
+        if (process.env.NODE_ENV !== 'test') {
+          console.log(`Bot needs to be invited to channel ${channel}`);
+        }
+        return { success: false, error: 'Bot not in channel' };
+      } else if (response.data.error === 'missing_scope') {
+        if (process.env.NODE_ENV !== 'test') {
+          console.log('Missing scope for reactions.add. Check bot permissions.');
+        }
+        return { success: false, error: 'Missing scope' };
+      } else {
+        if (process.env.NODE_ENV !== 'test') {
+          console.log('Error adding reaction:', response.data);
+        }
+        return { success: false, error: response.data.error };
+      }
+    }
+    
+    return { success: true, emoji: reaction };
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception adding reaction:', err);
+    }
+    return { success: false, error: err };
+  }
+}
+
+/**
+ * Send a delayed response to a Slack response_url
+ * @param {string} responseUrl - The Slack response URL
+ * @param {Object} message - The message to send
+ * @returns {Promise<boolean>} Success status
+ */
+async function sendDelayedResponse(responseUrl, message) {
+  try {
+    await axios.post(responseUrl, message);
+    return true;
+  } catch (error) {
+    // Only log in non-test environments
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Error sending delayed response:', error);
+    }
+    return false;
+  }
+}
+
+module.exports = {
+  voteEmojis,
+  getRandomEmoji,
+  addReaction,
+  sendDelayedResponse
+};
