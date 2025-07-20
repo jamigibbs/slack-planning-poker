@@ -68,10 +68,6 @@ describe('Response Formatters', () => {
       
       expect(result.response_type).toBe('in_channel');
       expect(result.attachments).toBeDefined();
-      expect(result.text).toContain('Planning Poker Results for "Test issue"');
-      expect(result.text).toContain('Vote distribution:');
-      expect(result.text).toContain('• 3 points: 2 votes (user1, user3)');
-      expect(result.text).toContain('• 5 points: 1 vote (user2)');
       
       // Check attachment with colored border
       expect(result.attachments).toHaveLength(1);

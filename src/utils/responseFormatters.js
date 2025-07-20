@@ -122,9 +122,7 @@ function formatPokerResults(votes, issue) {
         color: "#3AA3E3", // Informational blue color
         blocks: blocks
       }
-    ],
-    // Fallback text for clients that don't support Block Kit
-    text: `Planning Poker Results for "${formattedIssue}"\n${voteDistributionText.replace(/\*/g, '').replace(/\n$/, '')}`
+    ]
   };
 }
 
