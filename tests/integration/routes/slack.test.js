@@ -502,7 +502,7 @@ describe('Slack Routes', () => {
         .set('Content-Type', 'application/x-www-form-urlencoded');
       
       expect(response.status).toBe(200);
-      expect(response.body.text).toContain('Invalid vote data');
+      expect(response.body.text).toContain('Invalid action data');
     });
 
     test('should handle failed vote save', async () => {

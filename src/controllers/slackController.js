@@ -184,31 +184,36 @@ async function handleInteractiveActions(req, res) {
     
     const action = payload.actions[0];
     
-    // Check if this is a vote action
-    if (action.name !== 'vote' || !action.value) {
+    // Check if this is a supported action
+    if (!action.value || (action.name !== 'vote' && action.name !== 'reveal')) {
       return res.status(200).json({ 
         text: "Error: Unsupported action." 
       });
     }
     
     // Parse the value
-    let voteData;
+    let actionData;
     try {
-      voteData = JSON.parse(action.value);
+      actionData = JSON.parse(action.value);
     } catch (e) {
       return res.status(200).json({ 
-        text: "Error: Invalid vote data." 
+        text: "Error: Invalid action data." 
       });
     }
     
+    // Handle reveal action
+    if (action.name === 'reveal') {
+      return await handleRevealAction(actionData.sessionId, payload.channel.id, payload.team.id, res);
+    }
+    
     // Check if user has already voted to provide better feedback
-    const { success: checkSuccess, hasVoted } = await hasUserVoted(voteData.sessionId, payload.user.id);
+    const { success: checkSuccess, hasVoted } = await hasUserVoted(actionData.sessionId, payload.user.id);
     
     // Save the vote
     const { success, error } = await saveVote(
-      voteData.sessionId, 
+      actionData.sessionId, 
       payload.user.id, 
-      voteData.vote,
+      actionData.vote,
       payload.user.name
     );
     
@@ -231,7 +236,7 @@ async function handleInteractiveActions(req, res) {
     return res.status(200).json({ 
       response_type: "ephemeral",
       replace_original: false,
-      text: `Your vote (${voteData.vote}) ${voteAction}.` 
+      text: `Your vote (${actionData.vote}) ${voteAction}.` 
     });
   } catch (err) {
     logger.error('Error in handleInteractiveActions:', err);
