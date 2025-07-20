@@ -1,7 +1,7 @@
 {
   "name": "slack-planning-poker",
   "version": "1.0.0",
-  "description": "Slack Planning Poker with Supabase integration",
+  "description": "A simple, no frills planning poker Slack bot for estimating work",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

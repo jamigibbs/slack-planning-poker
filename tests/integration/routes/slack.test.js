@@ -159,7 +159,6 @@ describe('Slack Routes', () => {
         .set('Content-Type', 'application/x-www-form-urlencoded');
       
       expect(response.status).toBe(200);
-      expect(response.body.text).toContain('Processing your request');
     });
 
     test('should handle /poker-reveal command with no active session', async () => {
@@ -185,7 +184,6 @@ describe('Slack Routes', () => {
         .set('Content-Type', 'application/x-www-form-urlencoded');
       
       expect(response.status).toBe(200);
-      expect(response.body.text).toContain('Processing your request');
     });
 
     test('should handle /poker-reveal command with failed votes retrieval', async () => {
@@ -217,7 +215,6 @@ describe('Slack Routes', () => {
         .set('Content-Type', 'application/x-www-form-urlencoded');
       
       expect(response.status).toBe(200);
-      expect(response.body.text).toContain('Processing your request');
     });
 
     test('should handle /poker-reveal command with exception', async () => {
@@ -240,7 +237,6 @@ describe('Slack Routes', () => {
         .set('Content-Type', 'application/x-www-form-urlencoded');
       
       expect(response.status).toBe(200);
-      expect(response.body.text).toContain('Processing your request');
     });
 
     test('should handle /poker command with workspace-specific token', async () => {

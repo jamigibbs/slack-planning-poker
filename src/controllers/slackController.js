@@ -47,11 +47,8 @@ async function handlePokerCommand(req, res) {
     const botToken = await getBotToken(team_id);
     
     // Acknowledge receipt immediately
-    res.status(200).send({
-      response_type: "ephemeral",
-      text: "Processing your request..."
-    });
-    
+    res.status(200).send();
+  
     // For /poker command, text is required
     if (!text) {
       return sendDelayedResponse(response_url, { 
@@ -111,10 +108,7 @@ async function handlePokerRevealCommand(req, res) {
     const botToken = await getBotToken(team_id);
     
     // Acknowledge receipt immediately
-    res.status(200).send({
-      response_type: "ephemeral",
-      text: "Processing your request..."
-    });
+    res.status(200).send();
     
     // Get the latest session for this channel
     const { success, session, error } = await getLatestSessionForChannel(channel_id);
