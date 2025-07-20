@@ -37,6 +37,33 @@ async function saveVote(sessionId, userId, vote, username) {
 }
 
 /**
+ * Check if a user has already voted in a session
+ * @param {string} sessionId - The session ID
+ * @param {string} userId - The user ID
+ * @returns {Promise<Object>} Result with hasVoted boolean
+ */
+async function hasUserVoted(sessionId, userId) {
+  try {
+    const { data, error } = await supabase
+      .from('votes')
+      .select('user_id')
+      .eq('session_id', sessionId)
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (error) {
+      logger.error('Error checking if user voted:', error);
+      return { success: false, error, hasVoted: false };
+    }
+
+    return { success: true, hasVoted: data && data.length > 0 };
+  } catch (error) {
+    logger.error('Exception in hasUserVoted:', error);
+    return { success: false, error, hasVoted: false };
+  }
+}
+
+/**
  * Get all votes for a session
  * @param {string} sessionId - The session ID
  * @returns {Promise<Object>} Result with votes and session data
@@ -104,5 +131,6 @@ async function countVotes(sessionId) {
 module.exports = {
   saveVote,
   getSessionVotes,
-  countVotes
+  countVotes,
+  hasUserVoted
 };

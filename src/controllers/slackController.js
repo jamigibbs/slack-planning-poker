@@ -5,7 +5,8 @@ const {
 
 const { 
   saveVote, 
-  getSessionVotes 
+  getSessionVotes,
+  hasUserVoted 
 } = require('../services/voteService');
 
 const { 
@@ -199,6 +200,9 @@ async function handleInteractiveActions(req, res) {
       });
     }
     
+    // Check if user has already voted to provide better feedback
+    const { success: checkSuccess, hasVoted } = await hasUserVoted(voteData.sessionId, payload.user.id);
+    
     // Save the vote
     const { success, error } = await saveVote(
       voteData.sessionId, 
@@ -221,11 +225,12 @@ async function handleInteractiveActions(req, res) {
       await addReaction(payload.channel.id, timestamp, payload.user.id, null, botToken);
     }
     
-    // Send a confirmation message visible only to the user
+    // Send a confirmation message with appropriate wording
+    const voteAction = (checkSuccess && hasVoted) ? 'has been updated' : 'has been recorded';
     return res.status(200).json({ 
       response_type: "ephemeral",
       replace_original: false,
-      text: `Your vote (${voteData.vote}) has been recorded.` 
+      text: `Your vote (${voteData.vote}) ${voteAction}.` 
     });
   } catch (err) {
     logger.error('Error in handleInteractiveActions:', err);

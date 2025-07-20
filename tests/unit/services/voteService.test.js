@@ -1,7 +1,8 @@
 const { 
   saveVote,
   getSessionVotes,
-  countVotes
+  countVotes,
+  hasUserVoted
 } = require('../../../src/services/voteService');
 
 // Mock Supabase with proper method chaining
@@ -221,6 +222,81 @@ describe('Vote Service', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe(mockError.error);
       expect(result.count).toBe(0);
+    });
+  });
+
+  describe('hasUserVoted', () => {
+    test('should return true when user has already voted', async () => {
+      // Setup
+      const mockResponse = { 
+        data: [{ user_id: 'U123' }], 
+        error: null 
+      };
+      supabase.limit.mockResolvedValue(mockResponse);
+      
+      // Execute
+      const result = await hasUserVoted('sess-123', 'U123');
+      
+      // Assert
+      expect(supabase.from).toHaveBeenCalledWith('votes');
+      expect(supabase.select).toHaveBeenCalledWith('user_id');
+      expect(supabase.eq).toHaveBeenCalledWith('session_id', 'sess-123');
+      expect(supabase.eq).toHaveBeenCalledWith('user_id', 'U123');
+      expect(supabase.limit).toHaveBeenCalledWith(1);
+      expect(result.success).toBe(true);
+      expect(result.hasVoted).toBe(true);
+    });
+
+    test('should return false when user has not voted', async () => {
+      // Setup
+      const mockResponse = { 
+        data: [], 
+        error: null 
+      };
+      supabase.limit.mockResolvedValue(mockResponse);
+      
+      // Execute
+      const result = await hasUserVoted('sess-123', 'U456');
+      
+      // Assert
+      expect(supabase.from).toHaveBeenCalledWith('votes');
+      expect(supabase.select).toHaveBeenCalledWith('user_id');
+      expect(supabase.eq).toHaveBeenCalledWith('session_id', 'sess-123');
+      expect(supabase.eq).toHaveBeenCalledWith('user_id', 'U456');
+      expect(supabase.limit).toHaveBeenCalledWith(1);
+      expect(result.success).toBe(true);
+      expect(result.hasVoted).toBe(false);
+    });
+
+    test('should handle database errors', async () => {
+      // Setup
+      const mockError = { 
+        data: null, 
+        error: { message: 'Database error' } 
+      };
+      supabase.limit.mockResolvedValue(mockError);
+      
+      // Execute
+      const result = await hasUserVoted('sess-123', 'U123');
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(mockError.error);
+      expect(result.hasVoted).toBe(false);
+    });
+
+    test('should handle exceptions', async () => {
+      // Setup - mock to throw an exception
+      supabase.limit.mockRejectedValue(new Error('Connection failed'));
+      
+      // Execute
+      const result = await hasUserVoted('sess-123', 'U123');
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBeInstanceOf(Error);
+      expect(result.error.message).toBe('Connection failed');
+      expect(result.hasVoted).toBe(false);
     });
   });
 });
