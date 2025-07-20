@@ -25,7 +25,9 @@ async function createSession(channelId, issue) {
       });
     
     if (error) {
-      console.error('Error creating session:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error creating session:', error);
+      }
       return { success: false, error, sessionId: null };
     }
     
@@ -34,7 +36,9 @@ async function createSession(channelId, issue) {
     
     return { success: true, sessionId };
   } catch (err) {
-    console.error('Exception creating session:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception creating session:', err);
+    }
     return { success: false, error: err, sessionId: null };
   }
 }
@@ -69,7 +73,9 @@ async function getLatestSessionForChannel(channelId) {
       .limit(1);
     
     if (error) {
-      console.error('Error fetching latest session:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error fetching latest session:', error);
+      }
       return { success: false, error, session: null };
     }
     
@@ -82,7 +88,9 @@ async function getLatestSessionForChannel(channelId) {
     
     return { success: true, session: data[0] };
   } catch (err) {
-    console.error('Exception fetching latest session:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception fetching latest session:', err);
+    }
     return { success: false, error: err, session: null };
   }
 }
@@ -105,7 +113,9 @@ async function cleanupOldSessions(days = 30) {
       .lt('created_at', cutoffDate.toISOString());
     
     if (sessionsError) {
-      console.error('Error fetching old sessions:', sessionsError);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error fetching old sessions:', sessionsError);
+      }
       return { 
         success: false, 
         error: sessionsError,
@@ -132,7 +142,9 @@ async function cleanupOldSessions(days = 30) {
       .in('session_id', sessionIds);
     
     if (votesError) {
-      console.error('Error deleting votes:', votesError);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error deleting votes:', votesError);
+      }
       return { 
         success: false, 
         error: votesError,
@@ -148,7 +160,9 @@ async function cleanupOldSessions(days = 30) {
       .in('id', sessionIds);
     
     if (deleteError) {
-      console.error('Error deleting sessions:', deleteError);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error deleting sessions:', deleteError);
+      }
       return { 
         success: false, 
         error: deleteError,
@@ -164,7 +178,9 @@ async function cleanupOldSessions(days = 30) {
       message: `Successfully deleted ${sessionsDeleted} sessions and ${votesDeleted} votes`
     };
   } catch (err) {
-    console.error('Exception cleaning up sessions:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception cleaning up sessions:', err);
+    }
     return { 
       success: false, 
       error: err,

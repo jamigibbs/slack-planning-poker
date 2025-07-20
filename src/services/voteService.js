@@ -24,13 +24,17 @@ async function saveVote(sessionId, userId, vote, username) {
       });
       
     if (error) {
-      console.error('Error saving vote:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error saving vote:', error);
+      }
       return { success: false, error };
     }
     
     return { success: true };
   } catch (err) {
-    console.error('Exception saving vote:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception saving vote:', err);
+    }
     return { success: false, error: err };
   }
 }
@@ -49,7 +53,9 @@ async function getSessionVotes(sessionId) {
       .eq('session_id', sessionId);
 
     if (error) {
-      console.error('Error fetching votes:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error fetching votes:', error);
+      }
       return { success: false, error, votes: null };
     }
 
@@ -61,7 +67,9 @@ async function getSessionVotes(sessionId) {
       .limit(1);
     
     if (sessionError) {
-      console.error('Error fetching session:', sessionError);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error fetching session:', sessionError);
+      }
       return { success: false, error: sessionError, session: null, votes: null };
     }
     
@@ -71,7 +79,9 @@ async function getSessionVotes(sessionId) {
     
     return { success: true, session: sessionData[0], votes: data };
   } catch (err) {
-    console.error('Exception fetching votes:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception fetching votes:', err);
+    }
     return { success: false, error: err, session: null, votes: null };
   }
 }
@@ -89,13 +99,17 @@ async function countVotes(sessionId) {
       .eq('session_id', sessionId);
       
     if (error) {
-      console.error('Error counting votes:', error);
+      if (process.env.NODE_ENV !== 'test') {
+        console.error('Error counting votes:', error);
+      }
       return { success: false, error, count: 0 };
     }
     
     return { success: true, count };
   } catch (err) {
-    console.error('Exception counting votes:', err);
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Exception counting votes:', err);
+    }
     return { success: false, error: err, count: 0 };
   }
 }

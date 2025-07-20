@@ -14,6 +14,12 @@ jobs:
       matrix:
         node-version: [20.x]
     
+    env:
+      NODE_ENV: test
+      SUPABASE_URL: https://fake-supabase-url.supabase.co
+      SUPABASE_KEY: fake-supabase-key-for-testing
+      SLACK_BOT_TOKEN: xoxb-fake-token-for-testing
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
