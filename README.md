@@ -10,10 +10,12 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
 - **Interactive Voting**:
   - Persistent voting buttons that remain visible until results are revealed
   - Users can update their votes without creating duplicates
-  - Visual emoji reactions shows how many have voted
+  - Contextual feedback: "Your vote has been recorded" vs "Your vote has been updated"
+  - Visual emoji reactions show when someone has voted including when they update their vote
 - **Results Display**:
-  - Votes are displayed with usernames when revealed
-  - Clear vote distribution with counts and voters
+  - Votes displayed with usernames and clear distribution when revealed
+  - Rich, professional formatting using Slack's Block Kit
+  - Colored borders for visual appeal and better readability
 - **Data Storage**:
   - All votes and sessions stored in Supabase
   - Session history maintained per channel
@@ -21,21 +23,24 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
   - Admin cleanup endpoint for database management
   - Configurable retention period for old sessions
   - Browser and API access options
-- **Cold Start**:
-  - The bot might take a few seconds to start up on the first request. 
-  - A visual "Processing..." message will be shown during start up.
-  - Subsequent requests will be much faster
+- **Technical Features**:
+  - Comprehensive test coverage (82%+ for core controllers)
+  - Row-level security with Supabase for data protection
+  - Centralized logging system for better debugging
+  - Enhanced error handling and user feedback
+  - OAuth integration for secure workspace installations
 
 ## Usage
 
 1. In any Slack channel where the app is invited, type `/poker [issue]` to start a session
    - You can use a GitHub link, description, or any other text to describe the issue you're estimating.
 2. Team members click the voting buttons to submit their estimates
-   - Each user can vote once, but can change their vote
-   - Emoji reactions will appear on the message to indicate that a vote has been cast
+   - Each user can only vote once, but can change their vote
+   - Users receive contextual feedback: "Your vote has been recorded" or "Your vote has been updated"
+   - Emoji reactions will appear on the message to indicate that a vote has been cast or updated
 3. When ready, type `/poker-reveal` to show all votes with usernames
 
-## Setup
+## Development Setup
 
 ### Prerequisites
 
@@ -71,6 +76,28 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
    );
    ```
 
+   **team_installations**
+   ```sql
+   create table team_installations (
+     id serial primary key,
+     team_id text not null unique,
+     bot_token text not null,
+     access_token text not null,
+     scope text not null,
+     team_name text,
+     bot_user_id text,
+     app_id text,
+     installer_user_id text,
+     installed_at timestamp with time zone,
+     created_at timestamp with time zone default now(),
+     updated_at timestamp with time zone default now()
+   );
+   ```
+
+### Hosting provider
+
+- Add the project to a hosting service (e.g. Render)
+
 ### Add to a Slack workspace
 
 #### Create a new Slack App
@@ -85,7 +112,12 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
 1. In the left sidebar, click on "OAuth & Permissions"
 2. Under "Scopes", add these Bot Token Scopes:
   - `commands` (to create slash commands)
+  - `chat:write` (to send messages and responses)
   - `reactions:write` (to add emoji reactions)
+  - `channels:read` (to access public channel information)
+  - `groups:read` (to access private channel information)
+  - `im:read` (to access direct message information)
+  - `mpim:read` (to access multi-party direct message information)
 
 #### Create slash commands
 
@@ -168,9 +200,3 @@ curl -X POST https://slack-planning-poker.onrender.com/admin/cleanup \
 ```
 
 The `days` parameter is optional and defaults to 30 if not specified. This determines how many days of sessions to keep (older sessions will be deleted).
-
-## Troubleshooting
-
-- **Missing Reactions**: Make sure your bot has the `reactions:write` scope and is invited to the channel by adding @YourBotName to the channel.
-- **Command Not Working**: Verify that your ngrok URL is correctly set in the Slack App settings
-- **Database Errors**: Check your Supabase credentials and table structure
