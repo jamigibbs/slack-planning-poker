@@ -14,7 +14,8 @@ const {
   addReaction, 
   sendDelayedResponse,
   createPokerSessionMessage,
-  formatPokerResults
+  formatPokerResults,
+  updateVotingMessageWithVoters
 } = require('../utils');
 
 const { getBotTokenForTeam } = require('./oauthController');
@@ -224,6 +225,24 @@ async function handleInteractiveActions(req, res) {
       const timestamp = payload.message_ts || payload.original_message.ts;
       const botToken = await getBotToken(payload.team.id);
       await addReaction(payload.channel.id, timestamp, payload.user.id, null, botToken);
+      
+      // Update the voting message with voter profile images
+      try {
+        // Get all votes for this session to show voter gallery
+        const { success: votesSuccess, votes } = await getSessionVotes(voteData.sessionId);
+        if (votesSuccess && votes && votes.length > 0) {
+          await updateVotingMessageWithVoters(
+            payload.channel.id,
+            timestamp,
+            votes,
+            payload.original_message,
+            botToken
+          );
+        }
+      } catch (updateError) {
+        logger.error('Error updating voting message with voter profiles:', updateError);
+        // Don't fail the vote if profile update fails
+      }
     }
     
     // Send a confirmation message with appropriate wording
