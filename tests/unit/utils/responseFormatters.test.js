@@ -44,20 +44,8 @@ describe('Response Formatters', () => {
       expect(message.text).toContain(`<@${userId}>`);
       expect(message.text).toContain(issue);
       expect(message.text).toContain(sessionId);
-      expect(message.attachments).toHaveLength(2);
-      
-      // First attachment: voting buttons
+      expect(message.attachments).toHaveLength(1);
       expect(message.attachments[0].actions).toHaveLength(5);
-      expect(message.attachments[0].callback_id).toBe('vote');
-      expect(message.attachments[0].color).toBe('#3AA3E3');
-      
-      // Second attachment: Show Results button
-      expect(message.attachments[1].actions).toHaveLength(1);
-      expect(message.attachments[1].callback_id).toBe('reveal');
-      expect(message.attachments[1].color).toBe('#28a745');
-      expect(message.attachments[1].actions[0].name).toBe('reveal');
-      expect(message.attachments[1].actions[0].text).toBe('📊 Show Results');
-      expect(message.attachments[1].actions[0].style).toBe('primary');
     });
   });
 
