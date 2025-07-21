@@ -269,19 +269,46 @@ async function handleInteractiveActions(req, res) {
       });
     }
     
-    // Add a reaction to the message to indicate a vote was cast
-    if (channelId && messageTs) {
+    // Add a reaction to the message ONLY if this is the user's first vote
+    if (channelId && messageTs && !(checkSuccess && hasVoted)) {
       const botToken = await getBotToken(teamId);
       await addReaction(channelId, messageTs, userId, null, botToken);
     }
     
     // Send a confirmation message with appropriate wording
     const voteAction = (checkSuccess && hasVoted) ? 'has been updated' : 'has been recorded';
-    return res.status(200).json({ 
-      response_type: "ephemeral",
-      replace_original: false,
-      text: `Your vote (${voteData.vote}) ${voteAction}.` 
-    });
+    
+    let messageText = `Your vote (${voteData.vote}) ${voteAction}.`;
+    
+    if (checkSuccess && hasVoted) {
+      messageText = `:arrows_counterclockwise: ${messageText}`;
+    }
+    
+    // Check if we have a response_url available (should be available in both payload types)
+    if (payload.response_url) {
+      // Send an immediate acknowledgment
+      res.status(200).send();
+      
+      // Then send the detailed message via the response_url
+      try {
+        await axios.post(payload.response_url, {
+          response_type: "ephemeral",
+          replace_original: false,
+          text: messageText
+        });
+        return true;
+      } catch (error) {
+        logger.error('Error sending message via response_url:', error);
+        return false;
+      }
+    } else {
+      // Fallback to direct response if no response_url is available
+      return res.status(200).json({ 
+        response_type: "ephemeral",
+        replace_original: false,
+        text: messageText
+      });
+    }
   } catch (err) {
     logger.error('Error in handleInteractiveActions:', err);
     return res.status(200).json({ 

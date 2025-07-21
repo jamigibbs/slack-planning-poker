@@ -225,7 +225,7 @@ describe('Slack Controller', () => {
       expect(res.json).toHaveBeenCalledWith({
         response_type: 'ephemeral',
         replace_original: false,
-        text: 'Your vote (5) has been updated.'
+        text: ':arrows_counterclockwise: Your vote (5) has been updated.'
       });
     });
 
@@ -240,6 +240,63 @@ describe('Slack Controller', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         text: "Error: Unsupported payload type."
+      });
+    });
+
+    test('should add reaction for first-time vote but not for vote updates', async () => {
+      // First test: First-time vote should add reaction
+      voteService.hasUserVoted.mockResolvedValueOnce({
+        success: true,
+        hasVoted: false
+      });
+
+      req.body.payload = JSON.stringify({
+        type: 'block_actions',
+        user: { id: 'U123', username: 'testuser' },
+        team: { id: 'T123' },
+        channel: { id: 'C123' },
+        message: { ts: '1234567890.123456' },
+        actions: [{
+          action_id: 'vote_5',
+          value: JSON.stringify({ sessionId: 'sess-123', vote: 5 })
+        }]
+      });
+      
+      await handleInteractiveActions(req, res);
+      
+      // Verify reaction was added for first-time vote
+      expect(addReaction).toHaveBeenCalledWith(
+        'C123',
+        '1234567890.123456',
+        'U123',
+        null,
+        'xoxb-test-token'
+      );
+      
+      // Reset mocks for second test
+      jest.clearAllMocks();
+      
+      // Second test: Vote update should NOT add reaction
+      voteService.hasUserVoted.mockResolvedValueOnce({
+        success: true,
+        hasVoted: true
+      });
+      
+      voteService.saveVote.mockResolvedValueOnce({
+        success: true
+      });
+
+      await handleInteractiveActions(req, res);
+      
+      // Verify reaction was NOT added for vote update
+      expect(addReaction).not.toHaveBeenCalled();
+      
+      // Verify ephemeral message was still sent
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        response_type: 'ephemeral',
+        replace_original: false,
+        text: ':arrows_counterclockwise: Your vote (5) has been updated.'
       });
     });
   });
