@@ -6,6 +6,7 @@ const {
 const { 
   saveVote, 
   getSessionVotes,
+  getVotesForSession,
   hasUserVoted 
 } = require('../services/voteService');
 
@@ -169,7 +170,7 @@ async function handleRevealAction(sessionId, channelId, teamId, res) {
     const botToken = await getBotToken(teamId);
     
     // Get votes for this session
-    const { success: voteSuccess, votes, error: voteError } = await getSessionVotes(sessionId);
+    const { success: voteSuccess, votes, error: voteError } = await getVotesForSession(sessionId);
     
     if (!voteSuccess) {
       logger.error('Error retrieving votes:', voteError);
