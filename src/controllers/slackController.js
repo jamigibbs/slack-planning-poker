@@ -134,7 +134,7 @@ async function handlePokerRevealCommand(req, res) {
     }
     
     // Format and send the results
-    const message = formatPokerResults(votes, session.issue);
+    const message = formatPokerResults(votes, session.issue, session.id);
     const delayedSuccess = await sendDelayedResponse(response_url, message);
     
     // Add reaction to indicate session ended (using workspace-specific token)

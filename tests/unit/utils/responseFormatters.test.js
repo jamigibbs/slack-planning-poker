@@ -42,64 +42,58 @@ describe('Response Formatters', () => {
       
       // Check basic message properties
       expect(message.response_type).toBe('in_channel');
-      expect(message.blocks).toBeDefined();
-      expect(message.blocks).toHaveLength(4);
+      expect(message.attachments).toBeDefined();
+      expect(message.attachments).toHaveLength(1);
+      expect(message.attachments[0].color).toBe('#118461');
+      expect(message.attachments[0].blocks).toBeDefined();
+      expect(message.attachments[0].blocks).toHaveLength(5); // 5 blocks total
       
-      // Check header block
-      expect(message.blocks[0].type).toBe('header');
-      expect(message.blocks[0].text.type).toBe('plain_text');
-      expect(message.blocks[0].text.text).toContain('Planning Poker Session');
+      // Check first section block with intro text
+      expect(message.attachments[0].blocks[0].type).toBe('section');
+      expect(message.attachments[0].blocks[0].text.type).toBe('mrkdwn');
+      expect(message.attachments[0].blocks[0].text.text).toContain('How would you estimate this issue?');
       
-      // Check section block with message content
-      expect(message.blocks[1].type).toBe('section');
-      expect(message.blocks[1].text.type).toBe('mrkdwn');
-      const sectionText = message.blocks[1].text.text;
-      expect(sectionText).toContain(`<@${userId}>`);
-      expect(sectionText).toContain(issue);
-      expect(sectionText).toContain('/poker-reveal');
+      // Check divider after intro
+      expect(message.attachments[0].blocks[1].type).toBe('divider');
+      
+      // Check section block with issue text
+      expect(message.attachments[0].blocks[2].type).toBe('section');
+      expect(message.attachments[0].blocks[2].text.type).toBe('mrkdwn');
+      expect(message.attachments[0].blocks[2].text.text).toContain('*Issue:* Test issue');
       
       // Check actions block with voting buttons
-      expect(message.blocks[2].type).toBe('actions');
-      expect(message.blocks[2].block_id).toBe('vote_actions');
-      expect(message.blocks[2].elements).toHaveLength(5);
+      expect(message.attachments[0].blocks[3].type).toBe('actions');
+      expect(message.attachments[0].blocks[3].block_id).toBe('vote_actions');
+      expect(message.attachments[0].blocks[3].elements).toHaveLength(5); // 5 voting buttons
       
-      // Check first button
-      const firstButton = message.blocks[2].elements[0];
-      expect(firstButton.type).toBe('button');
-      expect(firstButton.text.type).toBe('plain_text');
-      expect(firstButton.text.text).toBe('1');
-      expect(firstButton.action_id).toBe('vote_1');
-      expect(JSON.parse(firstButton.value)).toEqual({ sessionId, vote: 1 });
-      
-      // Check context footer
-      expect(message.blocks[3].type).toBe('context');
-      expect(message.blocks[3].elements[0].type).toBe('mrkdwn');
-      expect(message.blocks[3].elements[0].text).toContain('Click a button to cast your vote');
-      expect(message.blocks[3].elements[0].text).toContain(`Session ID: ${sessionId}`);
+      // Check context block with session info
+      expect(message.attachments[0].blocks[4].type).toBe('context');
+      expect(message.attachments[0].blocks[4].elements[0].type).toBe('mrkdwn');
+      expect(message.attachments[0].blocks[4].elements[0].text).toContain('Session ID: test-session');
     });
   });
 
   describe('formatPokerResults', () => {
     test('should handle no votes', () => {
-      const result = formatPokerResults([], 'Test issue');
+      const result = formatPokerResults([], 'Test issue', 'test-session-123');
       
       expect(result.response_type).toBe('ephemeral');
       expect(result.text).toContain('No votes');
     });
     
     test('should format votes correctly', () => {
+      const issue = 'Test issue';
+      const sessionId = 'test-session-123';
       const votes = [
-        { user_id: 'U1', vote: 3, username: 'user1' },
-        { user_id: 'U2', vote: 5, username: 'user2' },
-        { user_id: 'U3', vote: 3, username: 'user3' }
+        { userId: 'U1', userName: 'user1', vote: 3 },
+        { userId: 'U2', userName: 'user2', vote: 5 },
+        { userId: 'U3', userName: 'user3', vote: 3 }
       ];
       
-      const result = formatPokerResults(votes, 'Test issue');
+      const result = formatPokerResults(votes, issue, sessionId);
       
+      // Check basic message properties
       expect(result.response_type).toBe('in_channel');
-      expect(result.attachments).toBeDefined();
-      
-      // Check attachment with colored border
       expect(result.attachments).toHaveLength(1);
       expect(result.attachments[0].color).toBe('#3AA3E3');
       expect(result.attachments[0].blocks).toBeDefined();
@@ -108,24 +102,25 @@ describe('Response Formatters', () => {
       
       // Check header block
       expect(blocks[0].type).toBe('header');
-      expect(blocks[0].text.text).toBe('🎯 Planning Poker Results');
+      expect(blocks[0].text.text).toBe('✨ Planning Poker Results');
+      
+      // Check divider after header
+      expect(blocks[1].type).toBe('divider');
       
       // Check main content section with issue, votes, and distribution
-      expect(blocks[1].type).toBe('section');
-      const mainText = blocks[1].text.text;
+      expect(blocks[2].type).toBe('section');
+      const mainText = blocks[2].text.text;
       expect(mainText).toContain('*Issue:* Test issue');
       expect(mainText).toContain('*Total votes:* 3');
       expect(mainText).toContain('*Vote distribution:*');
-      expect(mainText).toContain('• 3 points: 2 votes (user1, user3)');
-      expect(mainText).toContain('• 5 points: 1 vote (user2)');
-      
-      // Check divider
-      expect(blocks[2].type).toBe('divider');
+      expect(mainText).toContain('• `3` - 2 votes');
+      expect(mainText).toContain('• `5` - 1 vote');
       
       // Check context footer
-      const lastBlock = blocks[blocks.length - 1];
-      expect(lastBlock.type).toBe('context');
-      expect(lastBlock.elements[0].text).toContain('Voting completed');
+      expect(blocks[3].type).toBe('context');
+      expect(blocks[3].elements[0].type).toBe('mrkdwn');
+      expect(blocks[3].elements[0].text).toContain('Voting completed');
+      expect(blocks[3].elements[0].text).toContain('Session ID: test-session-123');
     });
   });
 

@@ -35,82 +35,93 @@ function generateVotingButtons(sessionId) {
 function createPokerSessionMessage(userId, issue, sessionId) {
   const formattedIssue = formatIssueText(issue);
   
+  // Create blocks for the message
+  const blocks = [
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: "How would you estimate this issue? 🧐"
+      }
+    },
+    {
+      type: "divider"
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Issue:* ${formattedIssue}\n\nSelect a point value. Emoji reactions are used to represent each anonymous vote. Once everyone has voted, type \`/poker-reveal\` to review the results.`,
+      }
+    },
+    {
+      type: "actions",
+      block_id: "vote_actions",
+      elements: [
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "1"
+          },
+          value: JSON.stringify({ sessionId, vote: 1 }),
+          action_id: "vote_1"
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "2"
+          },
+          value: JSON.stringify({ sessionId, vote: 2 }),
+          action_id: "vote_2"
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "3"
+          },
+          value: JSON.stringify({ sessionId, vote: 3 }),
+          action_id: "vote_3"
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "5"
+          },
+          value: JSON.stringify({ sessionId, vote: 5 }),
+          action_id: "vote_5"
+        },
+        {
+          type: "button",
+          text: {
+            type: "plain_text",
+            text: "8"
+          },
+          value: JSON.stringify({ sessionId, vote: 8 }),
+          action_id: "vote_8"
+        }
+      ]
+    },
+    {
+      type: "context",
+      elements: [
+        {
+          type: "mrkdwn",
+          text: `Session started by <@${userId}> • Session ID: ${sessionId}`
+        }
+      ]
+    }
+  ];
+
   return {
     response_type: "in_channel",
-    blocks: [
+    attachments: [
       {
-        type: "header",
-        text: {
-          type: "plain_text",
-          text: "✨ Planning Poker Session"
-        }
-      },
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `Session started by <@${userId}> for issue: ${formattedIssue}\n\nOnce everyone has voted, type \`/poker-reveal\` to reveal the results.`
-        }
-      },
-      {
-        type: "actions",
-        block_id: "vote_actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "1"
-            },
-            value: JSON.stringify({ sessionId, vote: 1 }),
-            action_id: "vote_1"
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "2"
-            },
-            value: JSON.stringify({ sessionId, vote: 2 }),
-            action_id: "vote_2"
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "3"
-            },
-            value: JSON.stringify({ sessionId, vote: 3 }),
-            action_id: "vote_3"
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "5"
-            },
-            value: JSON.stringify({ sessionId, vote: 5 }),
-            action_id: "vote_5"
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "8"
-            },
-            value: JSON.stringify({ sessionId, vote: 8 }),
-            action_id: "vote_8"
-          }
-        ]
-      },
-      {
-        type: "context",
-        elements: [
-          {
-            type: "mrkdwn",
-            text: `Click a button to cast your vote • Session ID: ${sessionId}`
-          }
-        ]
+        color: "#118461", // Green color
+        blocks: blocks
       }
     ]
   };
@@ -120,9 +131,10 @@ function createPokerSessionMessage(userId, issue, sessionId) {
  * Format the results of a planning poker session
  * @param {Array} votes - Array of votes with user info
  * @param {string} issue - The issue text
+ * @param {string} sessionId - The session ID
  * @returns {Object} Formatted results message for Slack
  */
-function formatPokerResults(votes, issue) {
+function formatPokerResults(votes, issue, sessionId = 'N/A') {
   if (!votes || votes.length === 0) {
     return {
       response_type: "ephemeral",
@@ -146,7 +158,7 @@ function formatPokerResults(votes, issue) {
   let voteDistributionText = "*Vote distribution:*\n";
   Object.keys(voteCounts).sort((a, b) => a - b).forEach(value => {
     const { count, users } = voteCounts[value];
-    voteDistributionText += `• ${value} points: ${count} vote${count > 1 ? 's' : ''} (${users.join(', ')})\n`;
+    voteDistributionText += `• \`${value}\` - ${count} vote${count > 1 ? 's' : ''} (${users.join(', ')})\n`;
   });
 
   // Create blocks for rich formatting
@@ -155,18 +167,18 @@ function formatPokerResults(votes, issue) {
       type: "header",
       text: {
         type: "plain_text",
-        text: "🎯 Planning Poker Results"
+        text: "✨ Planning Poker Results"
       }
+    },
+    {
+      type: "divider"
     },
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Issue:* ${formattedIssue}\n*Total votes:* ${votes.length}\n\n${voteDistributionText}`
+        text: `*Issue:* ${formattedIssue}\n\n*Total votes:* ${votes.length}\n\n${voteDistributionText}`
       }
-    },
-    {
-      type: "divider"
     }
   ];
 
@@ -176,7 +188,7 @@ function formatPokerResults(votes, issue) {
     elements: [
       {
         type: "mrkdwn",
-        text: "Voting completed • Results visible to channel"
+        text: `Voting completed • Session ID: ${sessionId}`
       }
     ]
   });
