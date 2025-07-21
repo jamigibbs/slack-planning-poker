@@ -1,4 +1,3 @@
-const axios = require('axios');
 const { 
   createSession, 
   getLatestSessionForChannel 
@@ -227,27 +226,22 @@ async function handleInteractiveActions(req, res) {
       const botToken = await getBotToken(payload.team.id);
       await addReaction(payload.channel.id, timestamp, payload.user.id, null, botToken);
       
-      // Post voter status as a threaded message (simpler approach)
+      // Update the voting message with voter profile images
       try {
-        // Get all votes for this session to show voter count
+        // Get all votes for this session to show voter gallery
         const { success: votesSuccess, votes } = await getSessionVotes(voteData.sessionId);
         if (votesSuccess && votes && votes.length > 0) {
-          // Post a simple threaded message with vote count
-          await axios.post('https://slack.com/api/chat.postMessage', {
-            channel: payload.channel.id,
-            thread_ts: timestamp,
-            text: `✅ ${votes.length} vote${votes.length === 1 ? '' : 's'} received so far`,
-            reply_broadcast: false // Keep it in thread only
-          }, {
-            headers: {
-              'Authorization': `Bearer ${botToken}`,
-              'Content-Type': 'application/json; charset=utf-8'
-            }
-          });
+          await updateVotingMessageWithVoters(
+            payload.channel.id,
+            timestamp,
+            votes,
+            payload.original_message,
+            botToken
+          );
         }
       } catch (updateError) {
-        logger.error('Error posting vote status:', updateError);
-        // Don't fail the vote if status post fails
+        logger.error('Error updating voting message with voter profiles:', updateError);
+        // Don't fail the vote if profile update fails
       }
     }
     
