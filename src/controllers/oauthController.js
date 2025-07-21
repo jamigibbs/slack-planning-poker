@@ -8,7 +8,7 @@ const logger = require('../utils/logger');
 async function initiateOAuth(req, res) {
   const clientId = process.env.SLACK_CLIENT_ID;
   const redirectUri = `${process.env.BASE_URL}/slack/oauth/callback`;
-  const scopes = 'commands,chat:write,reactions:write,channels:read,groups:read,im:read,mpim:read';
+  const scopes = 'commands,chat:write,reactions:write,channels:read,groups:read,im:read,mpim:read,users:read';
   
   const authUrl = `https://slack.com/oauth/v2/authorize?` +
     `client_id=${clientId}&` +
