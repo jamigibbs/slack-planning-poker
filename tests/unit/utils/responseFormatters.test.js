@@ -33,19 +33,49 @@ describe('Response Formatters', () => {
   });
 
   describe('createPokerSessionMessage', () => {
-    test('should create a properly formatted message', () => {
+    test('should create a properly formatted message with Block Kit', () => {
       const userId = 'U123';
       const issue = 'Test issue';
       const sessionId = 'test-session';
       
       const message = createPokerSessionMessage(userId, issue, sessionId);
       
+      // Check basic message properties
       expect(message.response_type).toBe('in_channel');
-      expect(message.text).toContain(`<@${userId}>`);
-      expect(message.text).toContain(issue);
-      expect(message.text).toContain(sessionId);
-      expect(message.attachments).toHaveLength(1);
-      expect(message.attachments[0].actions).toHaveLength(5);
+      expect(message.blocks).toBeDefined();
+      expect(message.blocks).toHaveLength(4);
+      
+      // Check header block
+      expect(message.blocks[0].type).toBe('header');
+      expect(message.blocks[0].text.type).toBe('plain_text');
+      expect(message.blocks[0].text.text).toContain('Planning Poker Session');
+      
+      // Check section block with message content
+      expect(message.blocks[1].type).toBe('section');
+      expect(message.blocks[1].text.type).toBe('mrkdwn');
+      const sectionText = message.blocks[1].text.text;
+      expect(sectionText).toContain(`<@${userId}>`);
+      expect(sectionText).toContain(issue);
+      expect(sectionText).toContain('/poker-reveal');
+      
+      // Check actions block with voting buttons
+      expect(message.blocks[2].type).toBe('actions');
+      expect(message.blocks[2].block_id).toBe('vote_actions');
+      expect(message.blocks[2].elements).toHaveLength(5);
+      
+      // Check first button
+      const firstButton = message.blocks[2].elements[0];
+      expect(firstButton.type).toBe('button');
+      expect(firstButton.text.type).toBe('plain_text');
+      expect(firstButton.text.text).toBe('1');
+      expect(firstButton.action_id).toBe('vote_1');
+      expect(JSON.parse(firstButton.value)).toEqual({ sessionId, vote: 1 });
+      
+      // Check context footer
+      expect(message.blocks[3].type).toBe('context');
+      expect(message.blocks[3].elements[0].type).toBe('mrkdwn');
+      expect(message.blocks[3].elements[0].text).toContain('Click a button to cast your vote');
+      expect(message.blocks[3].elements[0].text).toContain(`Session ID: ${sessionId}`);
     });
   });
 

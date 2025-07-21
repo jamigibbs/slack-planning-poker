@@ -37,14 +37,80 @@ function createPokerSessionMessage(userId, issue, sessionId) {
   
   return {
     response_type: "in_channel",
-    text: `Planning Poker started by <@${userId}> for: *${formattedIssue}*\nSession ID: ${sessionId}\n\nOnce everyone has voted, type \`/poker-reveal\` to reveal the results.`,
-    attachments: [
+    blocks: [
       {
-        fallback: "Voting buttons",
-        callback_id: "vote",
-        color: "#3AA3E3",
-        attachment_type: "default",
-        actions: generateVotingButtons(sessionId)
+        type: "header",
+        text: {
+          type: "plain_text",
+          text: "✨ Planning Poker Session"
+        }
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `Session started by <@${userId}> for issue: ${formattedIssue}\n\nOnce everyone has voted, type \`/poker-reveal\` to reveal the results.`
+        }
+      },
+      {
+        type: "actions",
+        block_id: "vote_actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "1"
+            },
+            value: JSON.stringify({ sessionId, vote: 1 }),
+            action_id: "vote_1"
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "2"
+            },
+            value: JSON.stringify({ sessionId, vote: 2 }),
+            action_id: "vote_2"
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "3"
+            },
+            value: JSON.stringify({ sessionId, vote: 3 }),
+            action_id: "vote_3"
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "5"
+            },
+            value: JSON.stringify({ sessionId, vote: 5 }),
+            action_id: "vote_5"
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "8"
+            },
+            value: JSON.stringify({ sessionId, vote: 8 }),
+            action_id: "vote_8"
+          }
+        ]
+      },
+      {
+        type: "context",
+        elements: [
+          {
+            type: "mrkdwn",
+            text: `Click a button to cast your vote • Session ID: ${sessionId}`
+          }
+        ]
       }
     ]
   };

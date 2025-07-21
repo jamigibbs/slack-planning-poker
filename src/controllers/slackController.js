@@ -6,7 +6,6 @@ const {
 const { 
   saveVote, 
   getSessionVotes,
-  getVotesForSession,
   hasUserVoted 
 } = require('../services/voteService');
 
@@ -19,6 +18,7 @@ const {
 
 const { getBotTokenForTeam } = require('./oauthController');
 const logger = require('../utils/logger');
+const axios = require('axios'); // Added axios import
 
 /**
  * Get bot token for the current workspace
@@ -175,41 +175,91 @@ async function handleInteractiveActions(req, res) {
     
     const payload = JSON.parse(req.body.payload);
     
-    // Check if this is a button action
-    if (payload.type !== 'interactive_message' || !payload.actions || payload.actions.length === 0) {
-      return res.status(200).json({ 
-        text: "Error: Unsupported action type." 
-      });
-    }
-    
-    const action = payload.actions[0];
-    
-    // Check if this is a vote action
-    if (action.name !== 'vote' || !action.value) {
-      return res.status(200).json({ 
-        text: "Error: Unsupported action." 
-      });
-    }
-    
-    // Parse the value
+    // Extract action data based on payload type
     let voteData;
-    try {
-      voteData = JSON.parse(action.value);
-    } catch (e) {
+    let userId;
+    let userName;
+    let channelId;
+    let messageTs;
+    let teamId;
+    
+    if (payload.type === 'interactive_message') {
+      // Legacy format
+      if (!payload.actions || payload.actions.length === 0) {
+        return res.status(200).json({ 
+          text: "Error: No actions found in payload." 
+        });
+      }
+      
+      const action = payload.actions[0];
+      
+      // Check if this is a vote action
+      if (action.name !== 'vote' || !action.value) {
+        return res.status(200).json({ 
+          text: "Error: Unsupported action." 
+        });
+      }
+      
+      try {
+        voteData = JSON.parse(action.value);
+      } catch (e) {
+        return res.status(200).json({ 
+          text: "Error: Invalid vote data." 
+        });
+      }
+      
+      userId = payload.user.id;
+      userName = payload.user.name;
+      channelId = payload.channel?.id;
+      messageTs = payload.message_ts || (payload.original_message && payload.original_message.ts);
+      teamId = payload.team.id;
+    } 
+    else if (payload.type === 'block_actions') {
+      // Block Kit format
+      if (!payload.actions || payload.actions.length === 0) {
+        return res.status(200).json({ 
+          text: "Error: No actions found in payload." 
+        });
+      }
+      
+      const action = payload.actions[0];
+      
+      // Check if this is a vote action (action_id should start with "vote_")
+      if (!action.action_id.startsWith('vote_') || !action.value) {
+        return res.status(200).json({ 
+          text: "Error: Unsupported action." 
+        });
+      }
+      
+      try {
+        voteData = JSON.parse(action.value);
+      } catch (e) {
+        return res.status(200).json({ 
+          text: "Error: Invalid vote data." 
+        });
+      }
+      
+      userId = payload.user.id;
+      userName = payload.user.username || payload.user.name;
+      channelId = payload.channel?.id;
+      messageTs = payload.message?.ts || payload.container?.message_ts;
+      teamId = payload.team.id;
+    } 
+    else {
       return res.status(200).json({ 
-        text: "Error: Invalid vote data." 
+        text: "Error: Unsupported payload type." 
       });
     }
     
     // Check if user has already voted to provide better feedback
-    const { success: checkSuccess, hasVoted } = await hasUserVoted(voteData.sessionId, payload.user.id);
+    const { success: checkSuccess, hasVoted } = await hasUserVoted(voteData.sessionId, userId);
     
     // Save the vote
     const { success, error } = await saveVote(
       voteData.sessionId, 
-      payload.user.id, 
+      userId, 
       voteData.vote,
-      payload.user.name
+      userName
     );
     
     if (!success) {
@@ -220,10 +270,9 @@ async function handleInteractiveActions(req, res) {
     }
     
     // Add a reaction to the message to indicate a vote was cast
-    if (payload.channel && (payload.message_ts || (payload.original_message && payload.original_message.ts))) {
-      const timestamp = payload.message_ts || payload.original_message.ts;
-      const botToken = await getBotToken(payload.team.id);
-      await addReaction(payload.channel.id, timestamp, payload.user.id, null, botToken);
+    if (channelId && messageTs) {
+      const botToken = await getBotToken(teamId);
+      await addReaction(channelId, messageTs, userId, null, botToken);
     }
     
     // Send a confirmation message with appropriate wording
