@@ -102,9 +102,9 @@ async function handlePokerCommand(req, res) {
  */
 async function handlePokerRevealCommand(req, res) {
   try {
-    logger.log('Received reveal command:', JSON.stringify(req.body));
+    logger.log('Received reveal command');
     
-    const { channel_id, response_url, team_id } = req.body;
+    const { channel_id, response_url, team_id, user_id } = req.body;
     
     // Get workspace-specific bot token
     const botToken = await getBotToken(team_id);
@@ -134,7 +134,7 @@ async function handlePokerRevealCommand(req, res) {
     }
     
     // Format and send the results
-    const message = formatPokerResults(votes, session.issue, session.id);
+    const message = formatPokerResults(votes, session.issue, session.id, user_id);
     const delayedSuccess = await sendDelayedResponse(response_url, message);
     
     // Add reaction to indicate session ended (using workspace-specific token)
@@ -164,7 +164,7 @@ async function handlePokerRevealCommand(req, res) {
  */
 async function handleInteractiveActions(req, res) {
   try {
-    logger.log('Interactive action received:', JSON.stringify(req.body));
+    logger.log('Interactive action received:');
     
     if (!req.body.payload) {
       logger.log('Missing payload in request');

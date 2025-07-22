@@ -101,8 +101,8 @@ describe('Response Formatters', () => {
       const blocks = result.attachments[0].blocks;
       
       // Check header block
-      expect(blocks[0].type).toBe('header');
-      expect(blocks[0].text.text).toBe('✨ Planning Poker Results');
+      expect(blocks[0].type).toBe('section');
+      expect(blocks[0].text.text).toBe(':sparkles: Review your planning poker voting results.');
       
       // Check divider after header
       expect(blocks[1].type).toBe('divider');
@@ -119,7 +119,26 @@ describe('Response Formatters', () => {
       // Check context footer
       expect(blocks[3].type).toBe('context');
       expect(blocks[3].elements[0].type).toBe('mrkdwn');
-      expect(blocks[3].elements[0].text).toContain('Voting completed');
+      expect(blocks[3].elements[0].text).toContain('Votes revealed • Session ID: test-session-123');
+      expect(blocks[3].elements[0].text).toContain('Session ID: test-session-123');
+    });
+    
+    test('should include userId in footer when provided', () => {
+      const issue = 'Test issue';
+      const sessionId = 'test-session-123';
+      const userId = 'U123456';
+      const votes = [
+        { userId: 'U1', userName: 'user1', vote: 3 },
+        { userId: 'U2', userName: 'user2', vote: 5 }
+      ];
+      
+      const result = formatPokerResults(votes, issue, sessionId, userId);
+      
+      // Check that the footer includes the user mention
+      const blocks = result.attachments[0].blocks;
+      expect(blocks[3].type).toBe('context');
+      expect(blocks[3].elements[0].type).toBe('mrkdwn');
+      expect(blocks[3].elements[0].text).toContain(`Votes revealed by <@${userId}>`);
       expect(blocks[3].elements[0].text).toContain('Session ID: test-session-123');
     });
   });

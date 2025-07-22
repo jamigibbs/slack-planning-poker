@@ -41,7 +41,7 @@ function createPokerSessionMessage(userId, issue, sessionId) {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: "How would you estimate this issue? 🧐"
+        text: ":thinking_face: How would you estimate this issue?"
       }
     },
     {
@@ -110,7 +110,7 @@ function createPokerSessionMessage(userId, issue, sessionId) {
       elements: [
         {
           type: "mrkdwn",
-          text: `Session started by <@${userId}> • Session ID: ${sessionId}`
+          text: `Voting started by <@${userId}> • Session ID: ${sessionId}`
         }
       ]
     }
@@ -132,9 +132,10 @@ function createPokerSessionMessage(userId, issue, sessionId) {
  * @param {Array} votes - Array of votes with user info
  * @param {string} issue - The issue text
  * @param {string} sessionId - The session ID
+ * @param {string} userId - The user ID of the person who revealed the votes
  * @returns {Object} Formatted results message for Slack
  */
-function formatPokerResults(votes, issue, sessionId = 'N/A') {
+function formatPokerResults(votes, issue, sessionId = 'N/A', userId = null) {
   if (!votes || votes.length === 0) {
     return {
       response_type: "ephemeral",
@@ -164,10 +165,10 @@ function formatPokerResults(votes, issue, sessionId = 'N/A') {
   // Create blocks for rich formatting
   const blocks = [
     {
-      type: "header",
+      type: "section",
       text: {
-        type: "plain_text",
-        text: "✨ Planning Poker Results"
+        type: "mrkdwn",
+        text: ":sparkles: Review your planning poker voting results."
       }
     },
     {
@@ -188,7 +189,9 @@ function formatPokerResults(votes, issue, sessionId = 'N/A') {
     elements: [
       {
         type: "mrkdwn",
-        text: `Voting completed • Session ID: ${sessionId}`
+        text: userId 
+          ? `Votes revealed by <@${userId}> • Session ID: ${sessionId}`
+          : `Votes revealed • Session ID: ${sessionId}`
       }
     ]
   });
