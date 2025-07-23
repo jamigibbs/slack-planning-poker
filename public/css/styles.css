@@ -106,12 +106,6 @@ header h1 {
     margin: 2rem 0;
 }
 
-.slack-button-large {
-  height: auto;
-  width: 140px;
-  transform: scale(1.5);
-}
-
 /* How it works */
 .how-it-works {
     padding: 60px 0;
