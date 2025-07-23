@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning Poker for Slack - Simple Team Work Estimation</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <meta name="description" content="A simple, interactive Planning Poker tool for agile estimation in your Slack channels.">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <!-- <img src="/img/logo.png" alt="Slack Planning Poker Logo" class="header-logo"> -->
+                <h1>Planning Poker for Slack</h1>
+            </div>
+            <p class="tagline">A simple, no frills planning poker bot for agile estimation of team tickets and issues</p>
+        </div>
+    </header>
+    
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h2>Estimate Together, Decide Together</h2>
+                    <p>Planning Poker helps your team make better estimates by avoiding anchoring bias and encouraging discussion.</p>
+                    
+                    <div class="install-button">
+                      <a href="https://slack.com/oauth/v2/authorize?client_id=9206048732614.9206126962262&scope=channels:read,chat:write,commands,groups:read,im:read,mpim:read,reactions:write,users:read&user_scope=">
+                        <img alt="Add to Slack" class="slack-button-large" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+                      </a> 
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="how-it-works">
+            <div class="container">
+                <h2>How It Works</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <h3>Start a Session</h3>
+                        <p>Type <code>/poker [issue or description]</code> in any channel to start a new planning poker session.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <h3>Team Votes</h3>
+                        <p>Team members anonymously select their estimates (1, 2, 3, 5, or 8).</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <h3>Reveal Results</h3>
+                        <p>Type <code>/poker-reveal</code> to show everyone's votes and discuss the results.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="container">
+                <h2>Features</h2>
+                <div class="feature-grid">
+                    <div class="feature">
+                        <h3>Anonymous Voting</h3>
+                        <p>Prevent anchoring bias by keeping votes hidden until reveal.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>Simple Interface</h3>
+                        <p>No complex setup or configuration required.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>Interactive Buttons</h3>
+                        <p>Easy one-click voting with persistent buttons.</p>
+                    </div>
+                    <div class="feature">
+                        <h3>Vote Updates</h3>
+                        <p>Change your mind? Simply vote again to update.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="privacy-policy" class="privacy-policy">
+            <div class="container">
+                <h2>Privacy Policy</h2>
+                <div class="policy-content">
+                    <p>Last updated: July 23, 2025</p>
+                    
+                    <h3>Information We Collect</h3>
+                    <p>Slack Planning Poker collects minimal information necessary for the app to function:</p>
+                    <ul>
+                        <li>Slack workspace ID and access tokens (for authentication)</li>
+                        <li>Channel IDs where the app is used</li>
+                        <li>User IDs for those participating in voting sessions</li>
+                        <li>Voting data (associated with user IDs)</li>
+                    </ul>
+                    
+                    <h3>How We Use Information</h3>
+                    <p>We use the collected information solely for:</p>
+                    <ul>
+                        <li>Authenticating with the Slack API</li>
+                        <li>Managing planning poker sessions</li>
+                        <li>Recording and displaying votes</li>
+                    </ul>
+                    
+                    <h3>Data Retention</h3>
+                    <p>Voting data is retained for 30 days after a planning poker session concludes. After this period, the data is automatically deleted from our systems.</p>
+                    
+                    <h3>Third-Party Sharing</h3>
+                    <p>We do not share any collected information with third parties.</p>
+                    
+                    <h3>Contact</h3>
+                    <p>For any privacy-related questions, please contact us at <a href="mailto:hello@jgibbs.co">hello@jgibbs.co</a>.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="#privacy-policy">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="https://github.com/jamigibbs/slack-planning-poker" target="_blank">GitHub</a>
+                </div>
+                <p class="copyright">&copy; 2025 Slack Planning Poker</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

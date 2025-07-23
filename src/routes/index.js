@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
 
 // Import route modules
 const slackRoutes = require('./slack');
 const adminRoutes = require('./admin');
 const oauthRoutes = require('./oauth');
 
-// Root endpoint for health check
+// Root endpoint serves the landing page
 router.get('/', (req, res) => {
-  res.send('Slack Planning Poker server is running!');
+  res.sendFile(path.join(__dirname, '../../public/index.html'));
 });
 
 // Mount routes

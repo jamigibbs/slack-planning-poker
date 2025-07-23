@@ -1,0 +1,255 @@
+/* Base styles */
+:root {
+    --primary-color: #4A154B;
+    --secondary-color: #36C5F0;
+    --accent-color: #ECB22E;
+    --text-color: #1D1C1D;
+    --light-bg: #F8F8F8;
+    --white: #FFFFFF;
+    --max-width: 1200px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.container {
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+h1, h2, h3 {
+    margin-bottom: 0.5em;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+code {
+    background-color: #f1f1f1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+/* Header */
+header {
+    background: #776AAB;
+    background: linear-gradient(86deg,rgba(119, 106, 171, 1) 0%, rgba(119, 106, 171, 1) 25%, rgba(186, 105, 203, 1) 100%);  
+    color: var(--white);
+    padding: 20px 0;
+    text-align: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.header-logo {
+    height: 60px;
+    width: auto;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0;
+}
+
+.tagline {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-top: 5px;
+    display: block;
+    clear: both;
+}
+
+/* Hero section */
+.hero {
+    background-color: var(--light-bg);
+    padding: 60px 0;
+    text-align: center;
+}
+
+.hero-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.hero h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.install-button {
+    margin: 2rem 0;
+}
+
+.slack-button-large {
+  height: auto;
+  width: 140px;
+  transform: scale(1.5);
+}
+
+/* How it works */
+.how-it-works {
+    padding: 60px 0;
+    text-align: center;
+}
+
+.steps {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.step {
+    flex: 1;
+    min-width: 250px;
+    max-width: 350px;
+    padding: 30px;
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    font-weight: bold;
+}
+
+/* Features */
+.features {
+    background-color: var(--light-bg);
+    padding: 60px 0;
+}
+
+.features h2 {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.feature {
+    background-color: var(--white);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Privacy Policy */
+.privacy-policy {
+    padding: 60px 0;
+    background-color: var(--white);
+}
+
+.policy-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.privacy-policy h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.privacy-policy h3 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.privacy-policy p {
+    margin-bottom: 15px;
+}
+
+.privacy-policy ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+}
+
+.privacy-policy li {
+    margin-bottom: 8px;
+}
+
+/* Footer */
+footer {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 30px 0;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-links a {
+    color: var(--white);
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.footer-links a:hover {
+    opacity: 1;
+}
+
+.copyright {
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .steps {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .step {
+        width: 100%;
+    }
+}
