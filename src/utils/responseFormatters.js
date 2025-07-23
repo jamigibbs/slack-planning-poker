@@ -207,47 +207,9 @@ function formatPokerResults(votes, issue, sessionId = 'N/A', userId = null) {
   };
 }
 
-/**
- * Generate HTML response for admin cleanup endpoint
- * @param {Object} result - The cleanup result
- * @returns {string} HTML response
- */
-function generateCleanupHtmlResponse(result) {
-  return `
-    <html>
-      <head>
-        <title>Database Cleanup Results</title>
-        <style>
-          body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-          .success { color: green; }
-          .error { color: red; }
-          pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-        <h1>Database Cleanup Results</h1>
-        <div class="${result.success ? 'success' : 'error'}">
-          <h2>${result.success ? 'Success!' : 'Error'}</h2>
-          ${result.success 
-            ? `<p>Successfully cleaned up:</p>
-               <ul>
-                 <li><strong>${result.deletedSessions}</strong> old sessions</li>
-                 <li><strong>${result.deletedVotes}</strong> associated votes</li>
-               </ul>` 
-            : `<p>Error: ${result.error}</p>`
-          }
-        </div>
-        <h3>Full Response:</h3>
-        <pre>${JSON.stringify(result, null, 2)}</pre>
-      </body>
-    </html>
-  `;
-}
-
 module.exports = {
   formatIssueText,
   generateVotingButtons,
   createPokerSessionMessage,
-  formatPokerResults,
-  generateCleanupHtmlResponse
+  formatPokerResults
 };

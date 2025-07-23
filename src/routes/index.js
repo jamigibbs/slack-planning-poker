@@ -4,7 +4,6 @@ const path = require('path');
 
 // Import route modules
 const slackRoutes = require('./slack');
-const adminRoutes = require('./admin');
 const oauthRoutes = require('./oauth');
 
 // Root endpoint serves the landing page
@@ -14,7 +13,6 @@ router.get('/', (req, res) => {
 
 // Mount routes
 router.use('/slack', slackRoutes);
-router.use('/admin', adminRoutes);
 router.use('/slack', oauthRoutes); // OAuth routes under /slack
 
 module.exports = router;

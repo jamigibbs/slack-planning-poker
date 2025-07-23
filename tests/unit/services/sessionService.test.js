@@ -1,7 +1,6 @@
 const { 
   createSession,
   getLatestSessionForChannel,
-  cleanupOldSessions,
   latestSessionPerChannel
 } = require('../../../src/services/sessionService');
 
@@ -136,116 +135,6 @@ describe('Session Service', () => {
       // Assert
       expect(result.success).toBe(true);
       expect(result.session).toBeNull();
-    });
-  });
-
-  describe('cleanupOldSessions', () => {
-    test('should delete old sessions and votes', async () => {
-      // Setup
-      const mockSessionsResponse = { 
-        data: [{ id: 'sess-1' }, { id: 'sess-2' }],
-        error: null 
-      };
-      const mockVotesDeleteResponse = { error: null, count: 5 };
-      const mockSessionsDeleteResponse = { error: null, count: 2 };
-      
-      // Mock the select query for finding old sessions (resolves at .lt())
-      supabase.lt.mockResolvedValue(mockSessionsResponse);
-      
-      // Mock the delete operations (resolves at .in())
-      supabase.in
-        .mockResolvedValueOnce(mockVotesDeleteResponse)  // First .in() call for votes
-        .mockResolvedValueOnce(mockSessionsDeleteResponse); // Second .in() call for sessions
-      
-      // Execute
-      const result = await cleanupOldSessions(30);
-      
-      // Assert
-      expect(supabase.from).toHaveBeenCalledWith('sessions');
-      expect(supabase.from).toHaveBeenCalledWith('votes');
-      expect(supabase.select).toHaveBeenCalledWith('id');
-      expect(supabase.lt).toHaveBeenCalled();
-      expect(supabase.delete).toHaveBeenCalledTimes(2);
-      expect(supabase.in).toHaveBeenCalledWith('session_id', ['sess-1', 'sess-2']);
-      expect(supabase.in).toHaveBeenCalledWith('id', ['sess-1', 'sess-2']);
-      expect(result.success).toBe(true);
-      expect(result.deletedSessions).toBe(2);
-      expect(result.deletedVotes).toBe(5);
-    });
-
-    test('should handle no old sessions', async () => {
-      // Setup
-      const mockResponse = { data: [], error: null };
-      supabase.lt.mockResolvedValue(mockResponse);
-      
-      // Execute
-      const result = await cleanupOldSessions(30);
-      
-      // Assert
-      expect(result.success).toBe(true);
-      expect(result.deletedSessions).toBe(0);
-      expect(result.deletedVotes).toBe(0);
-    });
-
-    test('should handle error deleting votes', async () => {
-      // Setup
-      const mockSessionsResponse = { 
-        data: [{ id: 'sess-1' }, { id: 'sess-2' }],
-        error: null 
-      };
-      const mockVotesDeleteError = { error: 'Database error deleting votes', count: null };
-      
-      supabase.lt.mockResolvedValue(mockSessionsResponse);
-      // Mock the votes delete operation to return an error (resolves at first .in())
-      supabase.in.mockResolvedValueOnce(mockVotesDeleteError);
-      
-      // Execute
-      const result = await cleanupOldSessions(30);
-      
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error deleting votes');
-      expect(result.deletedSessions).toBe(0);
-      expect(result.deletedVotes).toBe(0);
-    });
-
-    test('should handle error deleting sessions', async () => {
-      // Setup
-      const mockSessionsResponse = { 
-        data: [{ id: 'sess-1' }, { id: 'sess-2' }],
-        error: null 
-      };
-      const mockVotesDeleteResponse = { error: null, count: 5 };
-      const mockSessionsDeleteError = { error: 'Database error deleting sessions', count: null };
-      
-      supabase.lt.mockResolvedValue(mockSessionsResponse);
-      supabase.in
-        .mockResolvedValueOnce(mockVotesDeleteResponse)  // First .in() call for votes succeeds
-        .mockResolvedValueOnce(mockSessionsDeleteError); // Second .in() call for sessions fails
-      
-      // Execute
-      const result = await cleanupOldSessions(30);
-      
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Database error deleting sessions');
-      expect(result.deletedSessions).toBe(0);
-      expect(result.deletedVotes).toBe(5);
-    });
-
-    test('should handle exceptions in cleanupOldSessions', async () => {
-      // Setup - mock to throw an exception
-      supabase.lt.mockRejectedValue(new Error('Database connection failed'));
-      
-      // Execute
-      const result = await cleanupOldSessions(30);
-      
-      // Assert
-      expect(result.success).toBe(false);
-      expect(result.error).toBeInstanceOf(Error);
-      expect(result.error.message).toBe('Database connection failed');
-      expect(result.deletedSessions).toBe(0);
-      expect(result.deletedVotes).toBe(0);
     });
   });
 });

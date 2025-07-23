@@ -2,8 +2,7 @@ const {
   formatIssueText, 
   generateVotingButtons,
   createPokerSessionMessage,
-  formatPokerResults,
-  generateCleanupHtmlResponse
+  formatPokerResults
 } = require('../../../src/utils/responseFormatters');
 
 describe('Response Formatters', () => {
@@ -140,34 +139,6 @@ describe('Response Formatters', () => {
       expect(blocks[3].elements[0].type).toBe('mrkdwn');
       expect(blocks[3].elements[0].text).toContain(`Votes revealed by <@${userId}>`);
       expect(blocks[3].elements[0].text).toContain('Session ID: test-session-123');
-    });
-  });
-
-  describe('generateCleanupHtmlResponse', () => {
-    test('should generate success HTML', () => {
-      const result = {
-        success: true,
-        deletedSessions: 5,
-        deletedVotes: 10
-      };
-      
-      const html = generateCleanupHtmlResponse(result);
-      
-      expect(html).toContain('Success!');
-      expect(html).toContain('5</strong> old sessions');
-      expect(html).toContain('10</strong> associated votes');
-    });
-    
-    test('should generate error HTML', () => {
-      const result = {
-        success: false,
-        error: 'Test error'
-      };
-      
-      const html = generateCleanupHtmlResponse(result);
-      
-      expect(html).toContain('Error');
-      expect(html).toContain('Test error');
     });
   });
 });

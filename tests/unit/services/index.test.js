@@ -10,10 +10,8 @@ describe('Services Index', () => {
     test('should export session service functions', () => {
       expect(servicesIndex.createSession).toBeDefined();
       expect(servicesIndex.getLatestSessionForChannel).toBeDefined();
-      expect(servicesIndex.cleanupOldSessions).toBeDefined();
       expect(typeof servicesIndex.createSession).toBe('function');
       expect(typeof servicesIndex.getLatestSessionForChannel).toBe('function');
-      expect(typeof servicesIndex.cleanupOldSessions).toBe('function');
     });
 
     test('should export vote service functions', () => {
@@ -28,6 +26,12 @@ describe('Services Index', () => {
     test('should have expected number of exported functions', () => {
       const exportedKeys = Object.keys(servicesIndex);
       expect(exportedKeys.length).toBeGreaterThan(0);
+      // Now expecting 5 functions instead of 6 (removed cleanupOldSessions)
+      expect(exportedKeys).toContain('createSession');
+      expect(exportedKeys).toContain('getLatestSessionForChannel');
+      expect(exportedKeys).toContain('saveVote');
+      expect(exportedKeys).toContain('getSessionVotes');
+      expect(exportedKeys).toContain('countVotes');
     });
   });
 });
