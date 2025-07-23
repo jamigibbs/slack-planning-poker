@@ -174,37 +174,42 @@ header h1 {
 }
 
 /* Privacy Policy */
-.privacy-policy {
+.privacy-policy, .support {
     padding: 60px 0;
     background-color: var(--white);
 }
 
-.policy-content {
+.support .container  {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.policy-content, .support {
     max-width: 800px;
     margin: 0 auto;
 }
 
-.privacy-policy h2 {
+.privacy-policy h2, .support h2 {
     text-align: center;
     margin-bottom: 30px;
 }
 
-.privacy-policy h3 {
+.privacy-policy h3, .support h3 {
     margin-top: 30px;
     margin-bottom: 15px;
     color: var(--primary-color);
 }
 
-.privacy-policy p {
+.privacy-policy p, .support p {
     margin-bottom: 15px;
 }
 
-.privacy-policy ul {
+.privacy-policy ul, .support ul {
     margin-left: 20px;
     margin-bottom: 20px;
 }
 
-.privacy-policy li {
+.privacy-policy li, .support li {
     margin-bottom: 8px;
 }
 
