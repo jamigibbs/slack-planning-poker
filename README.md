@@ -1,6 +1,25 @@
 # Slack Planning Poker
 
-A simple, interactive Planning Poker tool integrated with Slack and Supabase for agile estimation in your team channels.
+**Overview**
+
+This bot does two simple things:
+
+1. It asks the channel to give anonymous estimates for a provided issue with `/poker [issue or description]`. Channel members select a number (1, 2, 3, 5, or 8).
+2. It displays the results of the voting with `/poker-reveal`
+
+That's it. There are no extra setup steps or setup involved.
+
+After revealing the results, the team can discuss them and make a final estimate decision together. By hiding the figures during voting, the group avoids the cognitive bias of anchoring, where the first number spoken aloud sets a precedent for subsequent estimates.
+
+This process also encourages team collaborations and encourages further discussion of the issue especially if significant variation between estimates are revealed.
+
+**The Nitty Gritty**
+
+- There can only be one active voting session in a channel at a time. This is intentional. 
+- Teams vote together and discuss the results together. This app is not meant to be used asynchronously.
+- If the votes are revealed before everyone is done, that's ok! A session doesn't end until a new one is started using `/poker [issue]`.
+- If someone votes again, their last vote is simply updated. Running `/poker-reveal` again will show the updated votes.
+
 
 ## Features
 
@@ -73,6 +92,7 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
      vote integer not null,
      username text,
      unique(session_id, user_id)
+     created_at timestamp with time zone default now()
    );
    ```
 
@@ -175,6 +195,60 @@ A simple, interactive Planning Poker tool integrated with Slack and Supabase for
    ngrok http 3000
    ```
 6. Update your Slack App's request URLs with the ngrok URL
+
+## Data Retention
+
+The app implements a 30-day data retention policy as stated in the privacy policy. To ensure this policy is enforced, a scheduled job has been created to automatically delete data older than the specified retention period (default: 30 days).
+
+### Setting up the Data Retention Job on Render
+
+1. In your Render dashboard, create a new **Cron Job** service:
+   - Click on "New" and select "Cron Job"
+   - Connect to your GitHub repository
+   - Name: `slack-planning-poker-data-retention`
+   - Schedule: `0 0 * * *` (runs daily at midnight)
+   - Command: `node src/jobs/index.js dataRetention`
+   - Note: You can specify a custom retention period by setting the `RETENTION_DAYS` environment variable (e.g., `RETENTION_DAYS=45` for 45-day retention)
+   - Environment Variables: Add the same environment variables as your web service, including:
+     - `SUPABASE_URL`
+     - `SUPABASE_KEY`
+
+2. Configure the job:
+   - Set the appropriate environment
+   - Set the branch to deploy from (e.g., `main`)
+   - Click "Create Cron Job"
+
+The job will automatically run daily and delete any votes and sessions that are older than the specified retention period, in compliance with the app's data retention policy.
+
+### Running the Data Retention Job Manually
+
+You can also run the data retention job manually from the terminal with either the default 30-day retention period or a custom period:
+
+1. Make sure your environment variables are set up correctly:
+   ```bash
+   # Set your Supabase credentials
+   export SUPABASE_URL=your_supabase_url
+   export SUPABASE_KEY=your_supabase_key
+   ```
+
+2. Run the job with the default 30-day retention period:
+   ```bash
+   node src/jobs/index.js dataRetention
+   ```
+
+3. Run the job with a custom retention period (e.g., 45 days):
+   ```bash
+   # Set custom retention period
+   export RETENTION_DAYS=45
+   node src/jobs/index.js dataRetention
+   ```
+
+4. Or run the specific job file directly with a custom retention period:
+   ```bash
+   node -e "require('./src/jobs/dataRetention').cleanupOldData(45)"
+   ```
+
+This is useful for testing the job before deploying it to Render or for one-time cleanup operations.
 
 ## Administration
 
