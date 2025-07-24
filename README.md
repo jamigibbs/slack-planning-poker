@@ -191,11 +191,13 @@ This process also encourages team collaborations and encourages further discussi
    ```
 6. Update your Slack App's request URLs with the ngrok URL
 
-## Data Retention
+## Administration
+
+### Data Retention
 
 The app implements a 30-day data retention policy as stated in the privacy policy. To ensure this policy is enforced, a scheduled job has been created to automatically delete data older than the specified retention period (default: 30 days).
 
-### Setting up the Data Retention Job on Render
+#### Setting up the Data Retention Job on Render
 
 1. In your Render dashboard, create a new **Cron Job** service:
    - Click on "New" and select "Cron Job"
@@ -245,10 +247,3 @@ You can also run the data retention job manually from the terminal with either t
 
 This is useful for testing the job before deploying it to Render or for one-time cleanup operations.
 
-## Administration
-
-### Database Management
-
-The application includes an automated data retention job that periodically removes old sessions and their associated votes to manage database size. This job runs on a schedule defined in your environment configuration.
-
-You can configure the retention period by setting the `RETENTION_DAYS` environment variable (defaults to 30 days if not specified).
