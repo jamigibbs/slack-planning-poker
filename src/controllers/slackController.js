@@ -282,6 +282,8 @@ async function handleInteractiveActions(req, res) {
     
     if (checkSuccess && hasVoted) {
       messageText = `:arrows_counterclockwise: ${messageText}`;
+    } else {
+      messageText = `:white_check_mark: ${messageText}`;
     }
     
     // Check if we have a response_url available (should be available in both payload types)

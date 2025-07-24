@@ -171,7 +171,7 @@ describe('Slack Controller', () => {
       expect(res.json).toHaveBeenCalledWith({
         response_type: 'ephemeral',
         replace_original: false,
-        text: 'Your vote (5) has been recorded.'
+        text: ':white_check_mark: Your vote (5) has been recorded.'
       });
     });
 
