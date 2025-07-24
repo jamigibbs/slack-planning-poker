@@ -131,13 +131,10 @@ This process also encourages team collaborations and encourages further discussi
 
 1. In the left sidebar, click on "OAuth & Permissions"
 2. Under "Scopes", add these Bot Token Scopes:
-  - `commands` (to create slash commands)
-  - `chat:write` (to send messages and responses)
-  - `reactions:write` (to add emoji reactions)
-  - `channels:read` (to access public channel information)
-  - `groups:read` (to access private channel information)
-  - `im:read` (to access direct message information)
-  - `mpim:read` (to access multi-party direct message information)
+  - `commands`: Required for using the /poker and /poker-reveal slash commands in order to start and end a voting session
+  - `chat:write`: Required in order to send the session started message and voting results message to the channel
+  - `reactions:write`: Used to add emoji reactions after a user votes. The emoji is added to the planning poker message in the channel
+  - `users:read`: Needed to get the username which is displayed as part of the final voting tally breakdown.
 
 #### Create slash commands
 
