@@ -39,7 +39,7 @@ describe('Slack Utilities', () => {
       axios.post.mockResolvedValue(mockResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123', 'thumbsup', 'test-bot-token');
+      const result = await addReaction('C123', '1234567890.123456', 'thumbsup', 'test-bot-token');
       
       // Assert
       expect(axios.post).toHaveBeenCalledWith(
@@ -62,7 +62,7 @@ describe('Slack Utilities', () => {
 
     test('should skip reaction when no timestamp provided', async () => {
       // Execute
-      const result = await addReaction('C123', null, 'U123', 'thumbsup', 'test-bot-token');
+      const result = await addReaction('C123', null, 'thumbsup', 'test-bot-token');
       
       // Assert
       expect(axios.post).not.toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe('Slack Utilities', () => {
       axios.post.mockResolvedValue(mockResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123');
+      const result = await addReaction('C123', '1234567890.123456', 'test-bot-token');
       
       // Assert
       expect(axios.post).toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe('Slack Utilities', () => {
         .mockResolvedValueOnce(mockSuccessResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123', 'thumbsup', 'test-bot-token');
+      const result = await addReaction('C123', '1234567890.123456', 'thumbsup', 'test-bot-token');
       
       // Assert
       expect(axios.post).toHaveBeenCalledTimes(2);
@@ -106,7 +106,7 @@ describe('Slack Utilities', () => {
       axios.post.mockResolvedValue(mockResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123');
+      const result = await addReaction('C123', '1234567890.123456', 'test-bot-token');
       
       // Assert
       expect(result.success).toBe(false);
@@ -119,7 +119,7 @@ describe('Slack Utilities', () => {
       axios.post.mockResolvedValue(mockResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123');
+      const result = await addReaction('C123', '1234567890.123456', 'test-bot-token');
       
       // Assert
       expect(result.success).toBe(false);
@@ -132,7 +132,7 @@ describe('Slack Utilities', () => {
       axios.post.mockResolvedValue(mockResponse);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123');
+      const result = await addReaction('C123', '1234567890.123456', 'test-bot-token');
       
       // Assert
       expect(result.success).toBe(false);
@@ -145,7 +145,7 @@ describe('Slack Utilities', () => {
       axios.post.mockRejectedValue(networkError);
       
       // Execute
-      const result = await addReaction('C123', '1234567890.123456', 'U123');
+      const result = await addReaction('C123', '1234567890.123456', 'test-bot-token');
       
       // Assert
       expect(result.success).toBe(false);

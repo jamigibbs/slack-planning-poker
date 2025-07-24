@@ -48,12 +48,16 @@ This process also encourages team collaborations and encourages further discussi
 ## Usage
 
 1. In any Slack channel where the app is invited, type `/poker [issue]` to start a session
-   - You can use a GitHub link, description, or any other text to describe the issue you're estimating.
-2. Team members click the voting buttons to submit their estimates
-   - Each user can only vote once, but can change their vote
-   - Users receive contextual feedback: "Your vote has been recorded" or "Your vote has been updated"
-   - Emoji reactions will appear on the message to indicate that a vote has been cast or updated
-3. When ready, type `/poker-reveal` to show all votes with usernames
+2. Team members click the voting buttons (1, 2, 3, 5, 8) to cast their estimates
+3. Type `/poker-reveal` to show all votes and see the results
+
+**Supported conversation types:**
+- Public channels
+- Private channels  
+- Group DMs
+- Multi-party DMs
+
+**Note**: For DM usage, make sure to add the bot to the conversation first (e.g., `/invite @PlanningPoker`) so it can provide voting progress feedback through emoji reactions.
 
 ## Development Setup
 
@@ -246,4 +250,3 @@ You can also run the data retention job manually from the terminal with either t
    ```
 
 This is useful for testing the job before deploying it to Render or for one-time cleanup operations.
-

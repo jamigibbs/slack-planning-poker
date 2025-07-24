@@ -76,7 +76,7 @@ async function handlePokerCommand(req, res) {
     
     // Add reaction to indicate session started (using workspace-specific token)
     if (delayedSuccess) {
-      await addReaction(channel_id, null, user_id, null, botToken);
+      await addReaction(channel_id, null, null, botToken);
     }
     
     return delayedSuccess;
@@ -139,7 +139,7 @@ async function handlePokerRevealCommand(req, res) {
     
     // Add reaction to indicate session ended (using workspace-specific token)
     if (delayedSuccess) {
-      await addReaction(channel_id, null, null, null, botToken);
+      await addReaction(channel_id, null, null, botToken);
     }
     
     return delayedSuccess;
@@ -272,7 +272,7 @@ async function handleInteractiveActions(req, res) {
     // Add a reaction to the message ONLY if this is the user's first vote
     if (channelId && messageTs && !(checkSuccess && hasVoted)) {
       const botToken = await getBotToken(teamId);
-      await addReaction(channelId, messageTs, userId, null, botToken);
+      await addReaction(channelId, messageTs, null, botToken);
     }
     
     // Send a confirmation message with appropriate wording

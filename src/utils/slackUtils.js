@@ -14,15 +14,14 @@ function getRandomEmoji() {
  * Add a reaction emoji to a Slack message
  * @param {string} channel - The channel ID
  * @param {string} timestamp - The message timestamp
- * @param {string} user - The user ID
  * @param {string|null} reaction - Optional specific reaction to add, otherwise random
+ * @param {string} botToken - Bot token for authentication
  * @returns {Promise<Object>} Result of the operation
  */
-async function addReaction(channel, timestamp, user, reaction = null, botToken = null) {
+async function addReaction(channel, timestamp, reaction = null, botToken = null) {
   try {
     // Skip if no timestamp provided (can't add reaction without message timestamp)
     if (!timestamp) {
-      logger.log('Skipping reaction - no message timestamp provided');
       return { success: false, error: 'No timestamp provided' };
     }
     
@@ -48,7 +47,7 @@ async function addReaction(channel, timestamp, user, reaction = null, botToken =
       // Handle specific error cases
       if (response.data.error === 'already_reacted') {
         // Try again with a different emoji
-        return addReaction(channel, timestamp, user, getRandomEmoji(), botToken);
+        return addReaction(channel, timestamp, getRandomEmoji(), botToken);
       } else if (response.data.error === 'not_in_channel') {
         logger.log(`Bot needs to be invited to channel ${channel}`);
         return { success: false, error: 'Bot not in channel' };

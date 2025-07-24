@@ -161,7 +161,6 @@ describe('Slack Controller', () => {
       expect(addReaction).toHaveBeenCalledWith(
         'C123',
         '1234567890.123456',
-        'U123',
         null,
         'xoxb-test-token'
       );
@@ -268,7 +267,6 @@ describe('Slack Controller', () => {
       expect(addReaction).toHaveBeenCalledWith(
         'C123',
         '1234567890.123456',
-        'U123',
         null,
         'xoxb-test-token'
       );
